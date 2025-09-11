@@ -119,6 +119,7 @@ const saveAllSettingsBtn = document.getElementById('save-all-settings-btn');
     let currentConfiguredDaysOff = []; // NOVO: Armazena os dias de folga configurados semanalmente
     let initialConfiguredDaysOff = []; // Para armazenar o estado inicial dos dias configurados
     let currentWeekStartDate = null; // Para armazenar a data de início da semana atual do modal
+    let logsMap = new Map(); // NOVO: Para armazenar o mapa de logs globalmente
 
     // --- Funcoes de Carregamento e Salvamento de Configuracoes ---
     async function loadDefaultRate() {
@@ -178,19 +179,29 @@ const saveAllSettingsBtn = document.getElementById('save-all-settings-btn');
             fetch(`/api/settings/configured_days_off_weekly_range?start_date=${calendarStartDate.toISOString().split('T')[0]}&end_date=${calendarEndDate.toISOString().split('T')[0]}`)
         ]);
 
-        const logs = await logsResponse.json();
-        const historyData = await historyResponse.json();
-        const weeklyConfigData = await weeklyConfigResponse.json();
+        logsMap = new Map((await logsResponse.json()).map(log => [log.date, log])); // Atribui ao logsMap global
 
-        const history = historyData.value ? JSON.parse(historyData.value) : [];
+        // NOVO: Adicionar dias de folga padrão ao logsMap para que sejam considerados
+        let dayIteratorForFolga = new Date(calendarStartDate);
+        while (dayIteratorForFolga <= calendarEndDate) {
+            const currentDay = new Date(dayIteratorForFolga);
+            const isoDate = currentDay.toISOString().split('T')[0];
+            const currentDayOfWeek = (currentDay.getUTCDay() + 6) % 7; // 0=Segunda, 6=Domingo
+
+            // Se for um dia de folga padrão e não houver um log existente para este dia
+            if (currentDefaultDayOff !== -1 && currentDayOfWeek === currentDefaultDayOff && !logsMap.has(isoDate)) {
+                logsMap.set(isoDate, { date: isoDate, status: 'folga' }); // Adiciona um log virtual de folga
+            }
+            dayIteratorForFolga.setUTCDate(dayIteratorForFolga.getUTCDate() + 1);
+        }
+
+        const history = (await historyResponse.json()).value ? JSON.parse((await historyResponse.json()).value) : [];
         history.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
         const weeklyConfigMap = new Map();
-        weeklyConfigData.forEach(config => {
+        (await weeklyConfigResponse.json()).forEach(config => {
             weeklyConfigMap.set(config.week_start_date, config.days);
         });
-
-        const logsMap = new Map(logs.map(log => [log.date, log]));
 
         currentMonthYear.textContent = `${date.toLocaleString('default', { month: 'long' }).toUpperCase()} ${year}`;
 
@@ -582,6 +593,39 @@ const saveAllSettingsBtn = document.getElementById('save-all-settings-btn');
                 calculatedDaysResult.textContent = `Dias Trabalhados Calculados: ${data.calculated_days.toFixed(2)} dias`;
                 calculatedDaysResult.classList.remove('text-danger');
                 calculatedDaysResult.classList.add('text-success');
+
+                // NOVO: Preencher o calendário com os dias calculados
+                const numDaysToFill = Math.floor(data.calculated_days);
+                const startDateObj = new Date(startDate); // startDate is already YYYY-MM-DD
+                let daysFilled = 0;
+
+                for (let i = 0; daysFilled < numDaysToFill && i < 365; i++) { // Limite de 365 dias para evitar loop infinito
+                    const currentDay = new Date(startDateObj);
+                    currentDay.setDate(startDateObj.getDate() + i);
+                    const isoDate = currentDay.toISOString().split('T')[0];
+
+                    const log = logsMap.get(isoDate);
+
+                    // Verifica se o dia não tem status (não trabalhado e não folga)
+                    if (!log || (log.status !== 'trabalhado' && log.status !== 'folga')) {
+                        const logData = {
+                            date: isoDate,
+                            status: 'trabalhado',
+                            shift_type: 'dia_todo', // Assumindo dia todo para preenchimento automático
+                            daily_rate: dailyRate,
+                        };
+
+                        await fetch('/api/log', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(logData),
+                        });
+                        daysFilled++;
+                    }
+                }
+                calculateDaysModal.hide(); // Fecha o modal após o preenchimento
+                renderCalendar(currentDate); // Re-renderiza o calendário para mostrar os novos dias
+
             } else {
                 calculatedDaysResult.textContent = `Erro: ${data.detail || 'Ocorreu um erro no cálculo.'}`;
                 calculatedDaysResult.classList.remove('text-success');
