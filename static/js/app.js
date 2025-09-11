@@ -5,9 +5,33 @@ document.addEventListener('DOMContentLoaded', async function () {
     const prevMonthBtn = document.getElementById('prev-month-btn');
     const nextMonthBtn = document.getElementById('next-month-btn');
     const weeklySummary = document.getElementById('weekly-summary');
-    const reverseCalcInput = document.getElementById('reverse-calc-input');
-    const reverseCalcBtn = document.getElementById('reverse-calc-btn');
-    const reverseCalcResult = document.getElementById('reverse-calc-result');
+    // --- Elementos do Modal de Calcular Dias ---
+    const calculateDaysModalEl = document.getElementById('calculate-days-modal');
+    const calculateDaysModal = new bootstrap.Modal(calculateDaysModalEl);
+    const paymentDateCalcInput = document.getElementById('payment-date-calc-input');
+    const startDateCalcInput = document.getElementById('start-date-calc-input');
+    const dailyRateCalcInput = document.getElementById('daily-rate-calc-input');
+    const paidAmountCalcInput = document.getElementById('paid-amount-calc-input');
+    const calculateDaysBtn = document.getElementById('calculate-days-btn');
+    const calculatedDaysResult = document.getElementById('calculated-days-result');
+
+    calculateDaysModalEl.addEventListener('show.bs.modal', async function () {
+        // Preencher Valor do Dia (€) com o Valor Padrão do Dia
+        dailyRateCalcInput.value = currentDefaultRate.toFixed(2);
+
+        // Preencher Data de Início (Cálculo) com a primeira data disponível no calendário (primeiro dia do mês atual sem status)
+        const firstAvailableDayCell = calendarGrid.querySelector('.calendar-day:not(.day-name):not(.prev-month):not(.status-folga):not(.status-trabalhado):not(.week-total-cell)');
+
+        if (firstAvailableDayCell) {
+            const dayNumber = parseInt(firstAvailableDayCell.querySelector('span').textContent);
+            const month = currentDate.getMonth();
+            const year = currentDate.getFullYear();
+
+            const formattedDate = `${year}-${(month + 1).toString().padStart(2, '0')}-${dayNumber.toString().padStart(2, '0')}`;
+            startDateCalcInput.value = formattedDate;
+        }
+    });
+    
 
     // Elementos de Configuracao
     const defaultDailyRateInput = document.getElementById('default-daily-rate-input');
@@ -422,28 +446,7 @@ const saveAllSettingsBtn = document.getElementById('save-all-settings-btn');
         }
     });
 
-    reverseCalcBtn.addEventListener('click', async () => {
-        const amount = parseFloat(reverseCalcInput.value);
-        if (isNaN(amount) || amount <= 0) {
-            reverseCalcResult.textContent = 'Por favor, insira um valor positivo.';
-            reverseCalcResult.classList.remove('text-success');
-            reverseCalcResult.classList.add('text-danger');
-            return;
-        }
-
-        const response = await fetch(`/api/reverse-calculate?amount=${amount}`);
-        const data = await response.json();
-
-        if (response.ok) {
-            reverseCalcResult.textContent = `€${amount.toFixed(2)} equivale a aprox. ${data.days_equivalent} dias de trabalho (taxa de €${data.reference_rate.toFixed(2)}/dia).`;
-            reverseCalcResult.classList.remove('text-danger');
-            reverseCalcResult.classList.add('text-success');
-        } else {
-            reverseCalcResult.textContent = `Erro: ${data.detail}`;
-            reverseCalcResult.classList.remove('text-success');
-            reverseCalcResult.classList.add('text-danger');
-        }
-    });
+    
 
     prevMonthBtn.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
@@ -545,6 +548,50 @@ const saveAllSettingsBtn = document.getElementById('save-all-settings-btn');
         } catch (error) {
             console.error('Erro ao salvar configurações:', error);
             showAlert('Ocorreu um erro inesperado ao salvar as configurações.');
+        }
+    });
+
+    calculateDaysBtn.addEventListener('click', async () => {
+        const paymentDate = paymentDateCalcInput.value;
+        const startDate = startDateCalcInput.value;
+        const dailyRate = parseFloat(dailyRateCalcInput.value);
+        const paidAmount = parseFloat(paidAmountCalcInput.value);
+
+        if (!paymentDate || !startDate || isNaN(dailyRate) || dailyRate <= 0 || isNaN(paidAmount) || paidAmount <= 0) {
+            calculatedDaysResult.textContent = 'Por favor, preencha todos os campos com valores válidos.';
+            calculatedDaysResult.classList.remove('text-success');
+            calculatedDaysResult.classList.add('text-danger');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/calculate-days', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    payment_date: paymentDate,
+                    start_date: startDate,
+                    daily_rate: dailyRate,
+                    paid_amount: paidAmount
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                calculatedDaysResult.textContent = `Dias Trabalhados Calculados: ${data.calculated_days.toFixed(2)} dias`;
+                calculatedDaysResult.classList.remove('text-danger');
+                calculatedDaysResult.classList.add('text-success');
+            } else {
+                calculatedDaysResult.textContent = `Erro: ${data.detail || 'Ocorreu um erro no cálculo.'}`;
+                calculatedDaysResult.classList.remove('text-success');
+                calculatedDaysResult.classList.add('text-danger');
+            }
+        } catch (error) {
+            console.error('Erro ao calcular dias:', error);
+            calculatedDaysResult.textContent = 'Erro ao conectar com o servidor.';
+            calculatedDaysResult.classList.remove('text-success');
+            calculatedDaysResult.classList.add('text-danger');
         }
     });
 

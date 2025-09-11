@@ -121,16 +121,7 @@ def get_month_summary(year: int, month: int, db: Session = Depends(get_db)):
     total = db.execute(statement).scalar_one_or_none() or 0
     return {"total": total}
 
-@app.get("/api/reverse-calculate", tags=["Calculations"])
-def get_reverse_calculation(amount: float, db: Session = Depends(get_db)):
-    if amount <= 0:
-        return {"message": "O valor deve ser positivo."}
-    statement = select(WorkLog.daily_rate).where(WorkLog.daily_rate.isnot(None)).order_by(WorkLog.date.desc())
-    last_rate = db.execute(statement).scalars().first()
-    if not last_rate or last_rate <= 0:
-        raise HTTPException(status_code=404, detail="Nenhum valor diário de referência encontrado para o cálculo.")
-    days = amount / last_rate
-    return {"days_equivalent": round(days, 2), "reference_rate": last_rate}
+
 
 @app.get("/api/settings/default_day_off")
 def get_default_day_off(db: Session = Depends(get_db)):
@@ -306,6 +297,22 @@ class WeeklyPaymentSchema(WeeklyPaymentBase):
     id: Optional[int] = None # Optional for new entries
     class Config:
         orm_mode = True
+
+class CalculateDaysRequest(BaseModel):
+    payment_date: date
+    start_date: date
+    daily_rate: float
+    paid_amount: float
+
+@app.post("/api/calculate-days", tags=["Calculations"])
+def calculate_days(request: CalculateDaysRequest):
+    if request.daily_rate <= 0:
+        raise HTTPException(status_code=400, detail="O valor do dia deve ser positivo.")
+    if request.paid_amount <= 0:
+        raise HTTPException(status_code=400, detail="O valor pago deve ser positivo.")
+
+    calculated_days = request.paid_amount / request.daily_rate
+    return {"calculated_days": calculated_days}
 
 @app.get("/api/weekly_payment/{week_start_date}", response_model=WeeklyPaymentSchema, tags=["Weekly Payments"])
 def get_weekly_payment(week_start_date: date, db: Session = Depends(get_db)):

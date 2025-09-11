@@ -24,19 +24,15 @@
                 <div id="calendar-grid" class="calendar-grid"></div>
                 <hr>
                 <div class="row mt-4">
-                    <div class="col-md-6">
-                        <h4>Resumo Semanal</h4>
-                        <p id="weekly-summary">Selecione uma semana no calendário.</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h4>Cálculo Reverso</h4>
-                        <div class="input-group">
-                            <span class="input-group-text">€</span>
-                            <input type="number" class="form-control" id="reverse-calc-input" placeholder="Digite um valor">
-                            <button class="btn btn-success" id="reverse-calc-btn">Calcular Dias</button>
-                        </div>
-                        <p id="reverse-calc-result" class="mt-2"></p>
-                    </div>
+                    
+                    
+                </div>
+                <h4 class="text-center mt-4">Calcular Dias Trabalhados</h4>
+                <p class="text-center mb-3">Utilize esta ferramenta para estimar os dias trabalhados com base no valor pago e na taxa diária.</p>
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#calculate-days-modal">
+                        <i class="bi bi-calculator me-2"></i>Calcular Dias
+                    </button>
                 </div>
             </div>
         </div>
@@ -228,6 +224,42 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-primary" id="save-all-settings-btn">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Modal for Calculate Days -->
+    <div class="modal fade" id="calculate-days-modal" tabindex="-1" aria-labelledby="calculateDaysModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="calculateDaysModalLabel">Calcular Dias Trabalhados</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="calculate-days-form">
+                <div class="mb-3">
+                    <label for="payment-date-calc-input" class="form-label">Data do Pagamento</label>
+                    <input type="date" class="form-control" id="payment-date-calc-input">
+                </div>
+                <div class="mb-3">
+                    <label for="start-date-calc-input" class="form-label">Data de Início (Cálculo)</label>
+                    <input type="date" class="form-control" id="start-date-calc-input">
+                </div>
+                <div class="mb-3">
+                    <label for="daily-rate-calc-input" class="form-label">Valor do Dia (€)</label>
+                    <input type="number" class="form-control" id="daily-rate-calc-input" step="0.01" placeholder="Ex: 100.00">
+                </div>
+                <div class="mb-3">
+                    <label for="paid-amount-calc-input" class="form-label">Valor Pago (€)</label>
+                    <input type="number" class="form-control" id="paid-amount-calc-input" step="0.01" placeholder="Ex: 1500.00">
+                </div>
+                <p id="calculated-days-result" class="mt-3 fw-bold"></p>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="calculate-days-btn">Calcular</button>
           </div>
         </div>
       </div>
