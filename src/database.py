@@ -42,8 +42,11 @@ class WeeklyPayment(Base):
     __tablename__ = "weekly_payments"
 
     id = Column(Integer, primary_key=True, index=True)
-    week_start_date = Column(Date, unique=True, nullable=False, index=True)
+    week_start_date = Column(Date, nullable=False, index=True)
     payment_date = Column(Date, nullable=True) # Nullable if payment not yet made
+    calculated_start_date = Column(Date, nullable=True) # NOVO: Data de início do cálculo
+    calculated_days = Column(Float, nullable=True) # NOVO: Dias calculados
+    calculated_value = Column(Float, nullable=True) # NOVO: Valor calculado
 
 def create_db_and_tables():
     Base.metadata.create_all(bind=engine)

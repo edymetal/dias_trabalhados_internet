@@ -9,7 +9,7 @@ from pydantic import BaseModel
 import json
 from sqlalchemy import select, and_, func
 
-from .database import create_db_and_tables, SessionLocal, WorkLog, ShiftType, WorkStatus, Settings
+from .database import create_db_and_tables, SessionLocal, WorkLog, ShiftType, WorkStatus, Settings, WeeklyPayment
 
 # Pydantic Models
 class WorkLogBase(BaseModel):
@@ -289,12 +289,18 @@ def delete_logs_by_weekday(weekday: int, week_start_date: date, db: Session = De
 class WeeklyPaymentBase(BaseModel):
     week_start_date: date
     payment_date: Optional[date] = None
+    calculated_start_date: Optional[date] = None # NOVO
+    calculated_days: Optional[float] = None # NOVO
+    calculated_value: Optional[float] = None # NOVO
 
 class WeeklyPaymentCreate(WeeklyPaymentBase):
     pass
 
 class WeeklyPaymentSchema(WeeklyPaymentBase):
     id: Optional[int] = None # Optional for new entries
+    period_end: Optional[date] = None # NOVO: Fim do período da semana (ainda calculado dinamicamente para compatibilidade)
+    total_worked_days: Optional[float] = None # NOVO: Total de dias trabalhados na semana (ainda calculado dinamicamente para compatibilidade)
+    total_worked_value: Optional[float] = None # NOVO: Valor total trabalhado na semana (ainda calculado dinamicamente para compatibilidade)
     class Config:
         orm_mode = True
 
@@ -325,16 +331,77 @@ def get_weekly_payment(week_start_date: date, db: Session = Depends(get_db)):
 
 @app.post("/api/weekly_payment", response_model=WeeklyPaymentSchema, tags=["Weekly Payments"])
 def create_or_update_weekly_payment(payment: WeeklyPaymentCreate, db: Session = Depends(get_db)):
-    """Creates or updates the payment date for a specific week."""
-    statement = select(WeeklyPayment).where(WeeklyPayment.week_start_date == payment.week_start_date)
-    db_payment = db.execute(statement).scalars().first()
-
-    if db_payment:
-        db_payment.payment_date = payment.payment_date
-    else:
-        db_payment = WeeklyPayment(**payment.dict())
-        db.add(db_payment)
+    """Creates a new payment entry for a specific week."""
+    db_payment = WeeklyPayment(**payment.dict())
+    db.add(db_payment)
     
     db.commit()
     db.refresh(db_payment)
     return db_payment
+
+@app.delete("/api/weekly_payment/{payment_id}", tags=["Weekly Payments"])
+def delete_weekly_payment(payment_id: int, db: Session = Depends(get_db)):
+    """Deletes a weekly payment entry by its ID."""
+    statement = select(WeeklyPayment).where(WeeklyPayment.id == payment_id)
+    db_payment = db.execute(statement).scalars().first()
+
+    if not db_payment:
+        raise HTTPException(status_code=404, detail="Registro de pagamento semanal não encontrado.")
+
+    db.delete(db_payment)
+    db.commit()
+    return {"message": f"Registro de pagamento {payment_id} excluído com sucesso."}
+
+    
+
+@app.get("/api/monthly_payments_history", response_model=List[WeeklyPaymentSchema], tags=["Weekly Payments"])
+def get_monthly_payments_history(year: int, month: int, db: Session = Depends(get_db)):
+    print(f"Entering get_monthly_payments_history for {year}-{month}") # Debugging line
+    """Gets the payment details for all weeks within a specific month and year."""
+    try:
+        payments_from_db = db.execute(select(WeeklyPayment)).scalars().all()
+
+        result_payments = []
+        for payment in payments_from_db:
+            # Determine the relevant date for filtering
+            filter_date = payment.payment_date if payment.payment_date else payment.week_start_date
+
+            # Filter in Python based on the month and year of the relevant date
+            if filter_date.year == year and filter_date.month == month:
+                # Use stored calculated values if available, otherwise fall back to week summary
+                if payment.calculated_start_date and payment.calculated_days is not None and payment.calculated_value is not None:
+                    period_end = payment.calculated_start_date + timedelta(days=int(payment.calculated_days) - 1)
+                    total_worked_days = payment.calculated_days
+                    total_worked_value = payment.calculated_value
+                else:
+                    # Fallback to existing weekly summary calculation
+                    week_start = payment.week_start_date
+                    week_end = week_start + timedelta(days=6) # Sunday of the week
+
+                    worked_days_statement = select(func.count(WorkLog.id), func.sum(WorkLog.daily_rate)).where(
+                        and_(
+                            WorkLog.date >= week_start,
+                            WorkLog.date <= week_end,
+                            WorkLog.status == WorkStatus.TRABALHADO
+                        )
+                    )
+                    worked_days_data = db.execute(worked_days_statement).first()
+                    
+                    period_end = week_end
+                    total_worked_days = worked_days_data[0] if worked_days_data and worked_days_data[0] is not None else 0
+                    total_worked_value = worked_days_data[1] if worked_days_data and worked_days_data[1] is not None else 0.0
+
+                result_payments.append(WeeklyPaymentSchema(
+                    id=payment.id,
+                    week_start_date=payment.week_start_date,
+                    payment_date=payment.payment_date,
+                    calculated_start_date=payment.calculated_start_date, # NOVO
+                    calculated_days=payment.calculated_days, # NOVO
+                    calculated_value=payment.calculated_value, # NOVO
+                    period_end=period_end,
+                    total_worked_days=total_worked_days,
+                    total_worked_value=total_worked_value
+                ))
+        return result_payments
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar histórico de pagamentos: {e}")

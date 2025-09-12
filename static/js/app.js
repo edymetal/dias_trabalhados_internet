@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     const calculateDaysBtn = document.getElementById('calculate-days-btn');
     const calculatedDaysResult = document.getElementById('calculated-days-result');
 
+    // --- Elementos do Histórico de Pagamentos ---
+    const paymentHistoryBody = document.getElementById('payment-history-body');
+    const noPaymentHistoryMessage = document.getElementById('no-payment-history-message');
+
     calculateDaysModalEl.addEventListener('show.bs.modal', async function () {
         // Preencher Valor do Dia (€) com o Valor Padrão do Dia
         dailyRateCalcInput.value = currentDefaultRate.toFixed(2);
@@ -352,10 +356,96 @@ const saveAllSettingsBtn = document.getElementById('save-all-settings-btn');
         monthTotalElement.style.gridColumn = 'span 8';
         monthTotalElement.textContent = `Total do Mês: €${monthlyTotal.toFixed(2)}`;
         calendarGrid.appendChild(monthTotalElement);
+
+        // NOVO: Renderizar o histórico de pagamentos para o mês atual
+        renderPaymentHistory(year, month + 1); // month + 1 porque JavaScript months são 0-indexed
     }
 
     function toggleTrabalhadoFields() {
         trabalhadoFields.style.display = statusSelect.value === 'trabalhado' ? 'block' : 'none';
+    }
+
+    async function renderPaymentHistory(year, month) {
+        paymentHistoryBody.innerHTML = ''; // Clear previous entries
+        noPaymentHistoryMessage.style.display = 'none'; // Hide message by default
+
+        const response = await fetch(`/api/monthly_payments_history?year=${year}&month=${month}`);
+        const payments = await response.json();
+
+        if (payments.length === 0) {
+            noPaymentHistoryMessage.style.display = 'block';
+            return;
+        }
+
+        payments.forEach(payment => {
+            const row = document.createElement('tr');
+
+            function formatDateToBR(isoDateString) {
+        if (!isoDateString) return '';
+        const date = new Date(isoDateString + 'T00:00:00'); // Add T00:00:00 to ensure UTC interpretation
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+            // Coluna Pagamento
+            const paymentDateCell = document.createElement('td');
+            if (payment.payment_date) {
+                paymentDateCell.textContent = formatDateToBR(payment.payment_date);
+            } else {
+                // Se não houver data de pagamento, use o último dia da semana (domingo)
+                const weekStartDate = new Date(payment.week_start_date);
+                const sundayOfWeek = new Date(weekStartDate);
+                sundayOfWeek.setDate(weekStartDate.getDate() + 6); // Adiciona 6 dias para chegar ao domingo
+                paymentDateCell.textContent = formatDateToBR(sundayOfWeek.toISOString().split('T')[0]);
+            }
+            row.appendChild(paymentDateCell);
+
+            // Coluna Período
+            const periodCell = document.createElement('td');
+            if (payment.calculated_start_date && payment.calculated_days) {
+                const calculatedEndDate = new Date(payment.calculated_start_date);
+                calculatedEndDate.setDate(calculatedEndDate.getDate() + payment.calculated_days - 1);
+                periodCell.textContent = `${formatDateToBR(payment.calculated_start_date)} a ${formatDateToBR(calculatedEndDate.toISOString().split('T')[0])}`;
+            } else {
+                periodCell.textContent = `${formatDateToBR(payment.week_start_date)} a ${formatDateToBR(payment.period_end)}`;
+            }
+            row.appendChild(periodCell);
+
+            // Coluna Dias
+            const daysCell = document.createElement('td');
+            daysCell.textContent = (payment.calculated_days !== null && payment.calculated_days !== undefined) ? payment.calculated_days.toFixed(0) : payment.total_worked_days.toFixed(0);
+            row.appendChild(daysCell);
+
+            // Coluna Valor
+            const valueCell = document.createElement('td');
+            valueCell.textContent = `€${(payment.calculated_value !== null && payment.calculated_value !== undefined) ? payment.calculated_value.toFixed(2) : payment.total_worked_value.toFixed(2)}`;
+            row.appendChild(valueCell);
+
+            // Coluna Ações (Botão de Excluir)
+            const actionsCell = document.createElement('td');
+            const deleteButton = document.createElement('button');
+            deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
+            deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+            deleteButton.addEventListener('click', async () => {
+                if (confirm('Tem certeza que deseja excluir este registro de pagamento?')) {
+                    const response = await fetch(`/api/weekly_payment/${payment.id}`, {
+                        method: 'DELETE',
+                    });
+                    if (response.ok) {
+                        showAlert('Registro de pagamento excluído com sucesso!');
+                        renderPaymentHistory(currentDate.getFullYear(), currentDate.getMonth() + 1); // Recarrega o histórico
+                    } else {
+                        showAlert('Erro ao excluir o registro de pagamento.');
+                    }
+                }
+            });
+            actionsCell.appendChild(deleteButton);
+            row.appendChild(actionsCell);
+
+            paymentHistoryBody.appendChild(row);
+        });
     }
 
     async function populateWeeklyDayOffModal(weekStartDate, logsMap) { // Adiciona weekStartDate e logsMap como parametros
@@ -590,7 +680,7 @@ const saveAllSettingsBtn = document.getElementById('save-all-settings-btn');
             const data = await response.json();
 
             if (response.ok) {
-                calculatedDaysResult.textContent = `Dias Trabalhados Calculados: ${data.calculated_days.toFixed(2)} dias`;
+                calculatedDaysResult.textContent = `Dias Trabalhados Calculados: ${Number.isInteger(data.calculated_days) ? data.calculated_days.toFixed(0) : data.calculated_days.toFixed(2)} dias`;
                 calculatedDaysResult.classList.remove('text-danger');
                 calculatedDaysResult.classList.add('text-success');
 
@@ -623,6 +713,37 @@ const saveAllSettingsBtn = document.getElementById('save-all-settings-btn');
                         daysFilled++;
                     }
                 }
+                // NOVO: Criar/Atualizar WeeklyPayment após o preenchimento dos dias
+                const paymentDateObj = new Date(paymentDate); // Cria um objeto Date a partir da string YYYY-MM-DD
+                const weekStartPaymentDate = new Date(paymentDateObj);
+                const dayOfWeek = weekStartPaymentDate.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+
+                // Calcula quantos dias subtrair para chegar à segunda-feira
+                // Se for domingo (0), subtrai 6 dias. Caso contrário, subtrai (dia da semana - 1)
+                const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+                weekStartPaymentDate.setDate(paymentDateObj.getDate() - daysToSubtract);
+                const isoWeekStartPaymentDate = weekStartPaymentDate.toISOString().split('T')[0];
+
+                await fetch('/api/weekly_payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        week_start_date: isoWeekStartPaymentDate,
+                        payment_date: paymentDate,
+                        calculated_start_date: startDate, // NOVO
+                        calculated_days: data.calculated_days, // NOVO
+                        calculated_value: paidAmount // NOVO
+                    }),
+                });
+
+                // Reset input fields
+                paymentDateCalcInput.value = '';
+                startDateCalcInput.value = '';
+                dailyRateCalcInput.value = '';
+                paidAmountCalcInput.value = '';
+                calculatedDaysResult.textContent = ''; // Clear the calculated message
+
                 calculateDaysModal.hide(); // Fecha o modal após o preenchimento
                 renderCalendar(currentDate); // Re-renderiza o calendário para mostrar os novos dias
 
