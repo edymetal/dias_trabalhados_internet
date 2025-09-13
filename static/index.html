@@ -12,14 +12,14 @@
     <div class="container mt-5">
         <div class="card shadow">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h1 class="mb-0">Controle de Dias Trabalhados</h1>
+                <h1 class="mb-0" data-i18n="app_title"></h1>
                 <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#settings-modal"><i class="bi bi-gear"></i></button>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <button class="btn btn-outline-primary" id="prev-month-btn">&lt; Mês Anterior</button>
+                    <button class="btn btn-outline-primary" id="prev-month-btn" data-i18n="prev_month"></button>
                     <h2 id="current-month-year" class="mb-0"></h2>
-                    <button class="btn btn-outline-primary" id="next-month-btn">Próximo Mês &gt;</button>
+                    <button class="btn btn-outline-primary" id="next-month-btn" data-i18n="next_month"></button>
                 </div>
                 <div id="calendar-grid" class="calendar-grid"></div>
                 <hr>
@@ -27,34 +27,34 @@
                     
                     
                 </div>
-                <h4 class="text-center mt-4">Calcular Dias Trabalhados</h4>
-                <p class="text-center mb-3">Utilize esta ferramenta para estimar os dias trabalhados com base no valor pago e na taxa diária.</p>
+                <h4 class="text-center mt-4" data-i18n="calculate_days_title"></h4>
+                <p class="text-center mb-3" data-i18n="calculate_days_description"></p>
                 <div class="d-flex justify-content-center mt-3">
                     <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#calculate-days-modal">
-                        <i class="bi bi-calculator me-2"></i>Calcular Dias
+                        <i class="bi bi-calculator me-2"></i><span data-i18n="calculate_days_button"></span>
                     </button>
                 </div>
                 <hr>
-                <h4 class="text-center mt-4">Histórico de Pagamentos do Mês</h4>
+                <h4 class="text-center mt-4" data-i18n="payment_history_title"></h4>
                 <div id="payment-history-container" class="mb-4">
                     <!-- Payment history will be populated here by JS -->
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>Pagamento</th>
-                                <th>Período</th>
-                                <th>Dias</th>
-                                <th>Valor</th>
-                                <th>Bônus</th>
-                                <th>Pago</th>
-                                <th>Ações</th>
+                                <th data-i18n="payment_col_payment"></th>
+                                <th data-i18n="payment_col_period"></th>
+                                <th data-i18n="payment_col_days"></th>
+                                <th data-i18n="payment_col_value"></th>
+                                <th data-i18n="payment_col_bonus"></th>
+                                <th data-i18n="payment_col_paid"></th>
+                                <th data-i18n="payment_col_actions"></th>
                             </tr>
                         </thead>
                         <tbody id="payment-history-body">
                             <!-- Payment history rows will be inserted here -->
                         </tbody>
                     </table>
-                    <p id="no-payment-history-message" class="text-center text-muted" style="display: none;">Nenhum pagamento registrado para este mês.</p>
+                    <p id="no-payment-history-message" class="text-center text-muted" style="display: none;" data-i18n="no_payment_history"></p>
                 </div>
             </div>
         </div>
@@ -65,40 +65,40 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="modal-title">Editar Dia</h5>
+            <h5 class="modal-title" id="modal-title" data-i18n="modal_edit_day_title"></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form id="day-edit-form">
                 <input type="hidden" id="edit-date-input">
                 <div class="mb-3">
-                    <label for="status-select" class="form-label">Status</label>
+                    <label for="status-select" class="form-label" data-i18n="modal_status_label"></label>
                     <select class="form-select" id="status-select">
-                        <option value="trabalhado">Trabalhado</option>
-                        <option value="folga">Folga</option>
-                        <option value="nao_trabalhado">Não Trabalhado</option>
+                        <option value="trabalhado" data-i18n="status_worked"></option>
+                        <option value="folga" data-i18n="status_day_off"></option>
+                        <option value="nao_trabalhado" data-i18n="status_nao_trabalhado"></option>
                     </select>
                 </div>
                 <div id="trabalhado-fields">
                     <div class="mb-3">
-                        <label for="shift-select" class="form-label">Turno</label>
+                        <label for="shift-select" class="form-label" data-i18n="modal_shift_label"></label>
                         <select class="form-select" id="shift-select">
-                            <option value="manha">ManhÃ£</option>
-                            <option value="noite">Noite</option>
-                            <option value="dia_todo">Dia Todo</option>
+                            <option value="manha" data-i18n="shift_morning"></option>
+                            <option value="noite" data-i18n="shift_night"></option>
+                            <option value="dia_todo" data-i18n="shift_full_day"></option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="daily-rate-input" class="form-label">Valor do Dia (â‚¬)</label>
+                        <label for="daily-rate-input" class="form-label" data-i18n="modal_daily_rate_label"></label>
                         <input type="number" class="form-control" id="daily-rate-input" step="0.01">
                     </div>
                 </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-danger me-auto" id="delete-day-btn">Excluir</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            <button type="button" class="btn btn-primary" id="save-day-btn">Salvar</button>
+            <button type="button" class="btn btn-danger me-auto" id="delete-day-btn" data-i18n="button_delete"></button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="button_close"></button>
+            <button type="button" class="btn btn-primary" id="save-day-btn" data-i18n="button_save"></button>
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="weeklySummaryModalLabel">Resumo Semanal e Pagamento</h5>
+            <h5 class="modal-title" id="weeklySummaryModalLabel" data-i18n="modal_weekly_summary_title"></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -118,13 +118,13 @@
                 <!-- Days status will be populated here by JS -->
             </div>
             <div class="mb-3">
-                <label for="payment-date-input" class="form-label">Data do Pagamento</label>
+                <label for="payment-date-input" class="form-label" data-i18n="modal_payment_date_label"></label>
                 <input type="date" class="form-control" id="payment-date-input">
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            <button type="button" class="btn btn-primary" id="save-payment-btn">Salvar Pagamento</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="button_close"></button>
+            <button type="button" class="btn btn-primary" id="save-payment-btn" data-i18n="button_save_payment"></button>
           </div>
         </div>
       </div>
@@ -137,14 +137,14 @@
       <div class="modal-dialog modal-sm">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="customAlertModalLabel">Notificação</h5>
+            <h5 class="modal-title" id="customAlertModalLabel" data-i18n="modal_notification_title"></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body" id="custom-alert-message">
             <!-- Message will be inserted here -->
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-i18n="button_ok"></button>
           </div>
         </div>
       </div>
@@ -154,17 +154,17 @@
       <div class="modal-dialog">
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="weeklyDayOffModalLabel">Gerenciar Dias de Contribuição Padrão</h5>
+            <h5 class="modal-title" id="weeklyDayOffModalLabel" data-i18n="modal_manage_default_contribution_days_title"></h5>
             
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-4">
             <form id="weekly-day-off-form">
                 <div class="mb-3">
-                    <label class="form-label">Selecione os dias que contribuem para o total padrão:</label>
+                    <label class="form-label" data-i18n="label_select_default_contribution_days"></label>
                     <div class="mb-3">
-                        <button type="button" class="btn btn-sm btn-primary me-2" id="select-all-days-btn">Marcar Todos</button>
-                        <button type="button" class="btn btn-sm btn-danger" id="deselect-all-days-btn">Desmarcar Todos</button>
+                        <button type="button" class="btn btn-sm btn-primary me-2" id="select-all-days-btn" data-i18n="button_mark_all"></button>
+                        <button type="button" class="btn btn-sm btn-danger" id="deselect-all-days-btn" data-i18n="button_unmark_all"></button>
                     </div>
                     <div id="day-off-checkboxes">
                         <!-- Checkboxes will be populated by JS -->
@@ -173,8 +173,8 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            <button type="button" class="btn btn-primary" id="save-weekly-day-off-btn">Salvar</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="button_close"></button>
+            <button type="button" class="btn btn-primary" id="save-weekly-day-off-btn" data-i18n="button_save"></button>
           </div>
         </div>
       </div>
@@ -185,15 +185,15 @@
       <div class="modal-dialog modal-sm">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="customConfirmModalLabel">Confirmação</h5>
+            <h5 class="modal-title" id="customConfirmModalLabel" data-i18n="modal_confirmation_title"></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body" id="custom-confirm-message">
             <!-- Message will be inserted here -->
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="confirm-no-btn">Não</button>
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="confirm-yes-btn">Sim</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="confirm-no-btn" data-i18n="button_no"></button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="confirm-yes-btn" data-i18n="button_yes"></button>
           </div>
         </div>
       </div>
@@ -204,14 +204,26 @@
       <div class="modal-dialog">
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="settingsModalLabel">Configurações</h5>
+            <h5 class="modal-title" id="settingsModalLabel" data-i18n="modal_settings_title"></h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-4">
             <form>
                 <div class="row mb-3 align-items-center">
                     <div class="col-sm-5">
-                        <label for="default-daily-rate-input" class="col-form-label">Valor Padrão do Dia (€)</label>
+                        <label for="language-select" class="col-form-label">Idioma</label>
+                    </div>
+                    <div class="col-sm-7">
+                        <select class="form-select" id="language-select">
+                            <option value="pt">Português</option>
+                            <option value="en">English</option>
+                            <option value="it">Italiano</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3 align-items-center">
+                    <div class="col-sm-5">
+                        <label for="default-daily-rate-input" class="col-form-label" data-i18n="label_default_daily_rate"></label>
                     </div>
                     <div class="col-sm-7">
                         <div class="input-group">
@@ -223,19 +235,19 @@
 
                 <div class="row mb-3 align-items-center">
                     <div class="col-sm-5">
-                        <label for="default-day-off-select" class="col-form-label">Dia de Folga Padrão</label>
+                        <label for="default-day-off-select" class="col-form-label" data-i18n="label_default_day_off"></label>
                     </div>
                     <div class="col-sm-7">
                         <div class="input-group">
                             <select class="form-select" id="default-day-off-select">
-                                <option value="-1">Nenhum</option>
-                                <option value="0">Segunda-feira</option>
-                                <option value="1">Terça-feira</option>
-                                <option value="2">Quarta-feira</option>
-                                <option value="3">Quinta-feira</option>
-                                <option value="4">Sexta-feira</option>
-                                <option value="5">Sábado</option>
-                                <option value="6">Domingo</option>
+                                <option value="-1" data-i18n="option_none"></option>
+                                <option value="0" data-i18n="day_monday"></option>
+                                <option value="1" data-i18n="day_tuesday"></option>
+                                <option value="2" data-i18n="day_wednesday"></option>
+                                <option value="3" data-i18n="day_thursday"></option>
+                                <option value="4" data-i18n="day_friday"></option>
+                                <option value="5" data-i18n="day_saturday"></option>
+                                <option value="6" data-i18n="day_sunday"></option>
                             </select>
                         </div>
                     </div>
@@ -243,15 +255,13 @@
                 <p id="default-day-off-status" class="mt-2"></p>
 
                 <div class="d-grid gap-2 mt-4">
-                    <button type="button" class="btn btn-info" id="manage-vacations-btn" data-bs-toggle="modal" data-bs-target="#vacation-modal">
-                        <i class="bi bi-airplane me-2"></i>Gerenciar Férias
-                    </button>
+                    <button type="button" class="btn btn-info" id="manage-vacations-btn" data-bs-toggle="modal" data-bs-target="#vacation-modal" data-i18n="button_manage_vacations"></button>
                 </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="save-all-settings-btn">Salvar</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="button_cancel"></button>
+            <button type="button" class="btn btn-primary" id="save-all-settings-btn" data-i18n="button_save"></button>
           </div>
         </div>
       </div>
@@ -262,14 +272,14 @@
       <div class="modal-dialog">
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="vacationModalLabel">Gerenciar Férias</h5>
+            <h5 class="modal-title" id="vacationModalLabel" data-i18n="modal_manage_vacations_title"></h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-4">
             <form id="vacation-form">
                 <div class="row mb-3 align-items-center">
                     <div class="col-sm-5">
-                        <label for="vacation-start-date-input" class="col-form-label">Data de Início</label>
+                        <label for="vacation-start-date-input" class="col-form-label" data-i18n="label_start_date"></label>
                     </div>
                     <div class="col-sm-7">
                         <input type="date" class="form-control" id="vacation-start-date-input">
@@ -277,7 +287,7 @@
                 </div>
                 <div class="row mb-3 align-items-center">
                     <div class="col-sm-5">
-                        <label for="vacation-end-date-input" class="col-form-label">Data de Término</label>
+                        <label for="vacation-end-date-input" class="col-form-label" data-i18n="label_end_date"></label>
                     </div>
                     <div class="col-sm-7">
                         <input type="date" class="form-control" id="vacation-end-date-input">
@@ -286,9 +296,9 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-danger me-auto" id="remove-vacation-btn">Remover</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="add-vacation-btn">Adicionar</button>
+            <button type="button" class="btn btn-danger me-auto" id="remove-vacation-btn" data-i18n="button_remove"></button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="button_cancel"></button>
+            <button type="button" class="btn btn-primary" id="add-vacation-btn" data-i18n="button_add"></button>
           </div>
         </div>
       </div>
@@ -299,14 +309,14 @@
       <div class="modal-dialog">
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="calculateDaysModalLabel">Calcular Dias Trabalhados</h5>
+            <h5 class="modal-title" id="calculateDaysModalLabel" data-i18n="calculate_days_title"></h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-4">
             <form id="calculate-days-form">
                 <div class="row mb-3 align-items-center">
                     <div class="col-sm-5">
-                        <label for="payment-date-calc-input" class="col-form-label">Data do Pagamento</label>
+                        <label for="payment-date-calc-input" class="col-form-label" data-i18n="label_payment_date"></label>
                     </div>
                     <div class="col-sm-7">
                         <div class="input-group">
@@ -316,7 +326,7 @@
                 </div>
                 <div class="row mb-3 align-items-center">
                     <div class="col-sm-5">
-                        <label for="start-date-calc-input" class="col-form-label">Data de Início (Cálculo)</label>
+                        <label for="start-date-calc-input" class="col-form-label" data-i18n="label_start_date_calculation"></label>
                     </div>
                     <div class="col-sm-7">
                         <div class="input-group">
@@ -326,7 +336,7 @@
                 </div>
                 <div class="row mb-3 align-items-center">
                     <div class="col-sm-5">
-                        <label for="daily-rate-calc-input" class="col-form-label">Valor do Dia</label>
+                        <label for="daily-rate-calc-input" class="col-form-label" data-i18n="label_daily_rate"></label>
                     </div>
                     <div class="col-sm-7">
                         <div class="input-group">
@@ -337,7 +347,7 @@
                 </div>
                 <div class="row mb-3 align-items-center">
                     <div class="col-sm-5">
-                        <label for="paid-amount-calc-input" class="col-form-label">Valor Pago</label>
+                        <label for="paid-amount-calc-input" class="col-form-label" data-i18n="label_paid_amount"></label>
                     </div>
                     <div class="col-sm-7">
                         <div class="input-group">
@@ -347,13 +357,13 @@
                     </div>
                 </div>
                 <div class="alert alert-info mt-3" role="alert" id="calculated-days-result">
-                    Dias Trabalhados Calculados: 0.00 dias
+                    <span data-i18n="calculated_days_result" data-i18n-options='{"days": "0.00"}'></span>
                 </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="calculate-days-btn">Calcular</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="button_cancel"></button>
+            <button type="button" class="btn btn-primary" id="calculate-days-btn" data-i18n="calculate_days_button"></button>
           </div>
         </div>
       </div>

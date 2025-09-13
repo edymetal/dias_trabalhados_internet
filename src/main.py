@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Header
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
@@ -10,6 +10,15 @@ import json
 from sqlalchemy import select, and_, func
 
 from .database import create_db_and_tables, SessionLocal, WorkLog, ShiftType, WorkStatus, Settings, WeeklyPayment, Vacation
+from .i18n import get_translation
+
+def get_language(accept_language: Optional[str] = Header("pt")) -> str:
+    # Simple language detection, can be expanded
+    if accept_language and "en" in accept_language:
+        return "en"
+    if accept_language and "it" in accept_language:
+        return "it"
+    return "pt"
 
 # Pydantic Models
 class WorkLogBase(BaseModel):
@@ -50,9 +59,9 @@ class ConfiguredDaysOffWeekly(BaseModel): # NOVO
 
 # --- FastAPI App Setup ---
 app = FastAPI(
-    title="Controle de Dias Trabalhados",
-    description="Uma API para gerenciar e calcular dias de trabalho e pagamentos.",
-    version="0.3.1" # Version updated
+    title=get_translation("app_title", "pt"), # Default to pt for API docs
+    description=get_translation("app_description", "pt"), # Default to pt for API docs
+    version="0.3.1"
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -136,19 +145,18 @@ def create_vacation(vacation: VacationCreate, db: Session = Depends(get_db)):
     return db_vacation
 
 @app.delete("/api/vacations", tags=["Vacations"])
-def delete_vacation(start_date: date, end_date: date, db: Session = Depends(get_db)):
+def delete_vacation(start_date: date, end_date: date, db: Session = Depends(get_db), lang: str = Depends(get_language)):
     statement = select(Vacation).where(
         and_(Vacation.start_date == start_date, Vacation.end_date == end_date)
     )
     db_vacation = db.execute(statement).scalars().first()
 
     if not db_vacation:
-        raise HTTPException(status_code=404, detail="Período de férias não encontrado.")
+        raise HTTPException(status_code=404, detail=get_translation("periodo_ferias_nao_encontrado", lang))
 
     db.delete(db_vacation)
     db.commit()
-    return {"message": "Período de férias excluído com sucesso."}
-
+    return {"message": get_translation("periodo_ferias_excluido_sucesso", lang)}
 @app.get("/api/vacations", response_model=List[VacationSchema], tags=["Vacations"])
 def get_vacations(db: Session = Depends(get_db)):
     vacations = db.execute(select(Vacation)).scalars().all()
@@ -247,7 +255,7 @@ def get_configured_days_off_weekly(week_start_date: date, db: Session = Depends(
     return {"days": []}
 
 @app.post("/api/settings/configured_days_off_weekly", tags=["Settings"])
-def set_configured_days_off_weekly(data: ConfiguredDaysOffWeekly, db: Session = Depends(get_db)):
+def set_configured_days_off_weekly(data: ConfiguredDaysOffWeekly, db: Session = Depends(get_db), lang: str = Depends(get_language)):
     """Sets the configured days off for a specific week."""
     # Get default daily rate
     default_rate_setting = db.query(Settings).filter(Settings.key == "default_rate").first()
@@ -274,8 +282,7 @@ def set_configured_days_off_weekly(data: ConfiguredDaysOffWeekly, db: Session = 
                 db.delete(existing_log)
 
     db.commit()
-    return {"message": "Dias de contribuição padrão salvos e logs atualizados com sucesso."}
-
+    return {"message": get_translation("dias_contribuicao_salvos_sucesso", lang)}
 @app.get("/api/settings/{key}", tags=["Settings"])
 def get_setting(key: str, db: Session = Depends(get_db)):
     setting = db.get(Settings, key)
@@ -284,7 +291,7 @@ def get_setting(key: str, db: Session = Depends(get_db)):
     return {"value": setting.value}
 
 @app.post("/api/settings/{key}", tags=["Settings"])
-def update_setting(key: str, data: SettingsUpdate, db: Session = Depends(get_db)):
+def update_setting(key: str, data: SettingsUpdate, db: Session = Depends(get_db), lang: str = Depends(get_language)):
     setting = db.get(Settings, key)
     if setting:
         setting.value = data.value
@@ -292,32 +299,30 @@ def update_setting(key: str, data: SettingsUpdate, db: Session = Depends(get_db)
         setting = Settings(key=key, value=data.value)
         db.add(setting)
     db.commit()
-    return {"message": "Configuração salva com sucesso."}
-
+    return {"message": get_translation("configuracao_salva_sucesso", lang)}
 @app.delete("/api/log/{log_date}", tags=["Work Logs"])
-def delete_log(log_date: str, db: Session = Depends(get_db)):
+def delete_log(log_date: str, db: Session = Depends(get_db), lang: str = Depends(get_language)):
     """Deletes a work log entry for a specific date."""
     try:
         parsed_date = date.fromisoformat(log_date)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Formato de data inválido. Use YYYY-MM-DD.")
+        raise HTTPException(status_code=400, detail=get_translation("formato_data_invalido", lang))
 
     statement = select(WorkLog).where(WorkLog.date == parsed_date)
     db_log = db.execute(statement).scalars().first()
 
     if not db_log:
-        raise HTTPException(status_code=404, detail="Registro não encontrado para a data especificada.")
+        raise HTTPException(status_code=404, detail=get_translation("registro_nao_encontrado", lang))
 
     db.delete(db_log)
     db.commit()
-    return {"message": f"Registro para {parsed_date} excluído com sucesso."}
-
+    return {"message": get_translation("registro_excluido_sucesso", lang, date=parsed_date)}
 @app.delete("/api/logs/by_weekday", tags=["Work Logs"])
-def delete_logs_by_weekday(weekday: int, week_start_date: date, db: Session = Depends(get_db)):
+def delete_logs_by_weekday(weekday: int, week_start_date: date, db: Session = Depends(get_db), lang: str = Depends(get_language)):
     """Deletes all work log entries for a specific weekday in a given week."""
     # Ensure weekday is valid (0=Monday, 6=Sunday)
     if not (0 <= weekday <= 6):
-        raise HTTPException(status_code=400, detail="Weekday must be between 0 (Monday) and 6 (Sunday).")
+        raise HTTPException(status_code=400, detail=get_translation("weekday_invalido", lang))
 
     # Calculate start and end of the week
     start_of_week = week_start_date
@@ -333,21 +338,20 @@ def delete_logs_by_weekday(weekday: int, week_start_date: date, db: Session = De
         current_day += timedelta(days=1)
 
     if not date_to_delete:
-        return {"message": f"No date found for weekday {weekday} in week starting {week_start_date}."}
+        return {"message": get_translation("no_date_found_for_weekday", lang, weekday=weekday, week_start_date=week_start_date)}
 
     # Delete logs for the identified date
     statement = select(WorkLog).where(WorkLog.date == date_to_delete) # Modificado
     logs_to_delete = db.execute(statement).scalars().all()
 
     if not logs_to_delete:
-        return {"message": f"No logs found for {date_to_delete}."}
+        return {"message": get_translation("no_logs_found", lang, date=date_to_delete)}
 
     for log in logs_to_delete:
         db.delete(log)
     db.commit()
 
-    return {"message": f"All logs for {date_to_delete} deleted successfully."}
-
+    return {"message": get_translation("all_logs_deleted_success", lang, date=date_to_delete)}
 # Pydantic Models for Weekly Payments
 class WeeklyPaymentBase(BaseModel):
     week_start_date: date
@@ -376,22 +380,22 @@ class CalculateDaysRequest(BaseModel):
     paid_amount: float
 
 @app.post("/api/calculate-days", tags=["Calculations"])
-def calculate_days(request: CalculateDaysRequest):
+def calculate_days(request: CalculateDaysRequest, lang: str = Depends(get_language)):
     if request.daily_rate <= 0:
-        raise HTTPException(status_code=400, detail="O valor do dia deve ser positivo.")
+        raise HTTPException(status_code=400, detail=get_translation("valor_dia_positivo", lang))
     if request.paid_amount <= 0:
-        raise HTTPException(status_code=400, detail="O valor pago deve ser positivo.")
+        raise HTTPException(status_code=400, detail=get_translation("valor_pago_positivo", lang))
 
     calculated_days = request.paid_amount / request.daily_rate
     return {"calculated_days": calculated_days}
 
 @app.get("/api/weekly_payment/{week_start_date}", response_model=WeeklyPaymentSchema, tags=["Weekly Payments"])
-def get_weekly_payment(week_start_date: date, db: Session = Depends(get_db)):
+def get_weekly_payment(week_start_date: date, db: Session = Depends(get_db), lang: str = Depends(get_language)):
     """Gets the payment details for a specific week."""
     statement = select(WeeklyPayment).where(WeeklyPayment.week_start_date == week_start_date)
     payment = db.execute(statement).scalars().first()
     if not payment:
-        raise HTTPException(status_code=404, detail="Pagamento semanal não encontrado.")
+        raise HTTPException(status_code=404, detail=get_translation("pagamento_semanal_nao_encontrado", lang))
     return payment
 
 @app.post("/api/weekly_payment", response_model=WeeklyPaymentSchema, tags=["Weekly Payments"])
@@ -405,22 +409,21 @@ def create_or_update_weekly_payment(payment: WeeklyPaymentCreate, db: Session = 
     return db_payment
 
 @app.delete("/api/weekly_payment/{payment_id}", tags=["Weekly Payments"])
-def delete_weekly_payment(payment_id: int, db: Session = Depends(get_db)):
+def delete_weekly_payment(payment_id: int, db: Session = Depends(get_db), lang: str = Depends(get_language)):
     """Deletes a weekly payment entry by its ID."""
     statement = select(WeeklyPayment).where(WeeklyPayment.id == payment_id)
     db_payment = db.execute(statement).scalars().first()
 
     if not db_payment:
-        raise HTTPException(status_code=404, detail="Registro de pagamento semanal não encontrado.")
+        raise HTTPException(status_code=404, detail=get_translation("registro_pagamento_semanal_nao_encontrado", lang))
 
     db.delete(db_payment)
     db.commit()
-    return {"message": f"Registro de pagamento {payment_id} excluído com sucesso."}
-
+    return {"message": get_translation("registro_pagamento_excluido_sucesso", lang, payment_id=payment_id)}
     
 
 @app.get("/api/monthly_payments_history", response_model=List[WeeklyPaymentSchema], tags=["Weekly Payments"])
-def get_monthly_payments_history(year: int, month: int, db: Session = Depends(get_db)):
+def get_monthly_payments_history(year: int, month: int, db: Session = Depends(get_db), lang: str = Depends(get_language)):
     print(f"Entering get_monthly_payments_history for {year}-{month}") # Debugging line
     """Gets the payment details for all weeks within a specific month and year."""
     try:
@@ -471,4 +474,4 @@ def get_monthly_payments_history(year: int, month: int, db: Session = Depends(ge
                 ))
         return result_payments
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar histórico de pagamentos: {e}")
+        raise HTTPException(status_code=500, detail=get_translation("erro_buscar_historico_pagamentos", lang, error_detail=e))

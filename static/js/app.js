@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             startDateCalcInput.value = formattedDate;
         }
         // Resetar o alerta de resultado
-        calculatedDaysResult.textContent = 'Dias Trabalhados Calculados: 0.00 dias';
+        calculatedDaysResult.innerHTML = `<span data-i18n="calculated_days_result" data-i18n-options='{"days": "0.00"}'>${translate("calculated_days_result", {"days": "0.00"})}</span>`;
         calculatedDaysResult.classList.remove('alert-success', 'alert-danger');
         calculatedDaysResult.classList.add('alert-info');
     });
@@ -94,8 +94,8 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
     const customAlertModal = new bootstrap.Modal(customAlertModalEl);
     const customAlertMessage = document.getElementById('custom-alert-message');
 
-    function showAlert(message) {
-        customAlertMessage.textContent = message;
+    function showAlert(messageKey, options = {}) {
+        customAlertMessage.textContent = translate(messageKey, options);
         customAlertModal.show();
         document.body.focus();
     }
@@ -109,8 +109,8 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
 
     let confirmCallback = null; // Para armazenar o callback da confirmação
 
-    function showConfirm(message, callback) {
-        customConfirmMessage.textContent = message;
+    function showConfirm(messageKey, callback, options = {}) {
+        customConfirmMessage.textContent = translate(messageKey, options);
         confirmCallback = callback;
         customConfirmModal.show();
         document.body.focus();
@@ -137,6 +137,42 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
     let initialConfiguredDaysOff = []; // Para armazenar o estado inicial dos dias configurados
     let currentWeekStartDate = null; // Para armazenar a data de início da semana atual do modal
     let logsMap = new Map(); // NOVO: Para armazenar o mapa de logs globalmente
+    let translations = {}; // Objeto para armazenar as traduções carregadas
+    let currentLanguage = localStorage.getItem('language') || 'pt'; // Idioma padrão
+
+    async function loadTranslations(lang) {
+        try {
+            const response = await fetch(`/static/locales/${lang}.json`);
+            translations = await response.json();
+            currentLanguage = lang;
+            localStorage.setItem('language', lang);
+            applyTranslations();
+            // Update lang attribute on html tag
+            document.documentElement.lang = lang;
+        } catch (error) {
+            console.error('Error loading translations:', error);
+        }
+    }
+
+    function translate(key, options = {}) {
+        let translatedText = translations[key] || key;
+        for (const optionKey in options) {
+            translatedText = translatedText.replace(`{${optionKey}}`, options[optionKey]);
+        }
+        return translatedText;
+    }
+
+    function applyTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+            const key = element.getAttribute('data-i18n');
+            const options = JSON.parse(element.getAttribute('data-i18n-options') || '{}');
+            element.textContent = translate(key, options);
+        });
+
+        // Update specific elements that are not just textContent
+        // Example: placeholder, value, etc.
+        // For now, we only have textContent, but this is where you'd add more if needed.
+    }
 
     // --- Funcoes de Carregamento e Salvamento de Configuracoes ---
     async function loadDefaultRate() {
@@ -216,9 +252,17 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             weeklyConfigMap.set(config.week_start_date, config.days);
         });
 
-        currentMonthYear.textContent = `${date.toLocaleString('default', { month: 'long' }).toUpperCase()} ${year}`;
+        currentMonthYear.textContent = `${date.toLocaleString(currentLanguage, { month: 'long' }).toUpperCase()} ${year}`;
 
-        const dayNames = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        const dayNames = [
+            translate('day_monday_short'),
+            translate('day_tuesday_short'),
+            translate('day_wednesday_short'),
+            translate('day_thursday_short'),
+            translate('day_friday_short'),
+            translate('day_saturday_short'),
+            translate('day_sunday_short')
+        ];
         dayNames.forEach(name => {
             const dayNameCell = document.createElement('div');
             dayNameCell.classList.add('calendar-day', 'day-name');
@@ -227,7 +271,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         });
         const weekTotalHeader = document.createElement('div');
         weekTotalHeader.classList.add('calendar-day', 'day-name', 'week-total-header');
-        weekTotalHeader.textContent = 'Total Sem.';
+        weekTotalHeader.textContent = translate('total_week');
         calendarGrid.appendChild(weekTotalHeader);
 
         let currentWeekTotal = 0;
@@ -256,7 +300,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                 dayCell.classList.add(`status-${log.status}`);
                 const statusIndicator = document.createElement('div');
                 statusIndicator.classList.add('status-indicator');
-                statusIndicator.textContent = log.status === 'trabalhado' ? `€${log.daily_rate.toFixed(2)}` : (log.status === 'ferias' ? 'Férias' : log.status.replace('_', ' '));
+                statusIndicator.textContent = log.status === 'trabalhado' ? `€${log.daily_rate.toFixed(2)}` : (log.status === 'ferias' ? translate('status_vacation') : translate(`status_${log.status}`));
                 dayCell.appendChild(statusIndicator);
 
                 if (log.status === 'trabalhado' && log.daily_rate) {
@@ -280,7 +324,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                     dayCell.classList.add('status-folga');
                     const statusIndicator = document.createElement('div');
                     statusIndicator.classList.add('status-indicator');
-                    statusIndicator.textContent = 'Folga';
+                    statusIndicator.textContent = translate('status_day_off');
                     dayCell.appendChild(statusIndicator);
                 }
             }
@@ -289,8 +333,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                 const clickedDate = new Date(currentDay); // Use the captured date
                 const clickedIsoDate = clickedDate.toISOString().split('T')[0];
 
-                modalTitle.textContent = `Editar Dia - ${clickedDate.getDate()}/${clickedDate.getMonth() + 1}/${clickedDate.getFullYear()}`;
-                editDateInput.value = clickedIsoDate;
+                modalTitle.textContent = `${translate('modal_edit_day_title')} - ${clickedDate.toLocaleDateString(currentLanguage)}`;                editDateInput.value = clickedIsoDate;
 
                 const logData = logsMap.get(clickedIsoDate);
 
@@ -387,15 +430,15 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         monthTotalElement.innerHTML = `
             <div class="row align-items-center justify-content-between mb-2">
                 <div class="col-auto text-start">
-                    <i class="bi bi-currency-euro me-1"></i> Valor Trabalhado: €${monthlyTotalValue.toFixed(2)}
+                    <i class="bi bi-coin me-1"></i> ${translate('total_worked_value', { value: monthlyTotalValue.toFixed(2) })}
                 </div>
                 <div class="col-auto text-end">
-                    <i class="bi bi-gift me-1"></i> Bônus: €${monthlyTotalBonus.toFixed(2)}
+                    <i class="bi bi-gift me-1"></i> ${translate('bonus', { value: monthlyTotalBonus.toFixed(2) })}
                 </div>
             </div>
             <div class="row align-items-center justify-content-center">
                 <div class="col-auto text-center fs-5 fw-bold">
-                    <i class="bi bi-wallet me-1"></i> Total Pago: €${monthlyTotalPaid.toFixed(2)}
+                    <i class="bi bi-wallet me-1"></i> ${translate('total_paid', { value: monthlyTotalPaid.toFixed(2) })}
                 </div>
             </div>
         `;
@@ -420,25 +463,22 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         payments.forEach(payment => {
             const row = document.createElement('tr');
 
-            function formatDateToBR(isoDateString) {
-        if (!isoDateString) return '';
-        const date = new Date(isoDateString + 'T00:00:00'); // Add T00:00:00 to ensure UTC interpretation
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-    }
+            function formatDate(isoDateString) {
+                if (!isoDateString) return '';
+                const date = new Date(isoDateString + 'T00:00:00'); // Add T00:00:00 to ensure UTC interpretation
+                return date.toLocaleDateString(currentLanguage);
+            }
 
             // Coluna Pagamento
             const paymentDateCell = document.createElement('td');
             if (payment.payment_date) {
-                paymentDateCell.textContent = formatDateToBR(payment.payment_date);
+                paymentDateCell.textContent = formatDate(payment.payment_date);
             } else {
                 // Se não houver data de pagamento, use o último dia da semana (domingo)
                 const weekStartDate = new Date(payment.week_start_date);
                 const sundayOfWeek = new Date(weekStartDate);
                 sundayOfWeek.setDate(weekStartDate.getDate() + 6); // Adiciona 6 dias para chegar ao domingo
-                paymentDateCell.textContent = formatDateToBR(sundayOfWeek.toISOString().split('T')[0]);
+                paymentDateCell.textContent = formatDate(sundayOfWeek.toISOString().split('T')[0]);
             }
             row.appendChild(paymentDateCell);
 
@@ -447,9 +487,9 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             if (payment.calculated_start_date && payment.calculated_days) {
                 const calculatedEndDate = new Date(payment.calculated_start_date);
                 calculatedEndDate.setDate(calculatedEndDate.getDate() + payment.calculated_days - 1);
-                periodCell.textContent = `${formatDateToBR(payment.calculated_start_date)} a ${formatDateToBR(calculatedEndDate.toISOString().split('T')[0])}`;
+                periodCell.textContent = `${formatDate(payment.calculated_start_date)} ${translate('to')} ${formatDate(calculatedEndDate.toISOString().split('T')[0])}`;
             } else {
-                periodCell.textContent = `${formatDateToBR(payment.week_start_date)} a ${formatDateToBR(payment.period_end)}`;
+                periodCell.textContent = `${formatDate(payment.week_start_date)} ${translate('to')} ${formatDate(payment.period_end)}`;
             }
             row.appendChild(periodCell);
 
@@ -479,16 +519,16 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
             deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
             deleteButton.addEventListener('click', async () => {
-                showConfirm('Tem certeza que deseja excluir este registro de pagamento?', async (confirmed) => {
+                showConfirm('confirm_delete_payment_record', async (confirmed) => {
                     if (confirmed) {
                         const response = await fetch(`/api/weekly_payment/${payment.id}`, {
                             method: 'DELETE',
                         });
                         if (response.ok) {
-                            showAlert('Registro de pagamento excluído com sucesso!');
+                            showAlert('alert_payment_record_deleted_success');
                             renderPaymentHistory(currentDate.getFullYear(), currentDate.getMonth() + 1); // Recarrega o histórico
                         } else {
-                            showAlert('Erro ao excluir o registro de pagamento.');
+                            showAlert('alert_error_deleting_payment_record');
                         }
                     }
                 });
@@ -503,7 +543,15 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
     async function populateWeeklyDayOffModal(weekStartDate, logsMap) { // Adiciona weekStartDate e logsMap como parametros
         currentWeekStartDate = weekStartDate; // Armazena a data de início da semana
         dayOffCheckboxesContainer.innerHTML = ''; // Limpa checkboxes anteriores
-        const dayNames = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+        const dayNamesFull = [
+            translate('day_monday'),
+            translate('day_tuesday'),
+            translate('day_wednesday'),
+            translate('day_thursday'),
+            translate('day_friday'),
+            translate('day_saturday'),
+            translate('day_sunday')
+        ];
 
         // Formatar weekStartDate para YYYY-MM-DD
         const formattedWeekStartDate = `${weekStartDate.getFullYear()}-${(weekStartDate.getMonth() + 1).toString().padStart(2, '0')}-${weekStartDate.getDate().toString().padStart(2, '0')}`;
@@ -559,7 +607,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
     async function updateWeeklySummary(isoDate) {
         const response = await fetch(`/api/summary/week?current_date=${isoDate}`);
         const data = await response.json();
-        weeklySummary.textContent = `Total para a semana (${data.week_start} a ${data.week_end}): €${data.total.toFixed(2)}`;
+        weeklySummary.textContent = `${translate('total_for_week')} (${new Date(data.week_start).toLocaleDateString(currentLanguage)} ${translate('to')} ${new Date(data.week_end).toLocaleDateString(currentLanguage)}): €${data.total.toFixed(2)}`;
     }
 
     statusSelect.addEventListener('change', toggleTrabalhadoFields);
@@ -585,7 +633,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
     // NOVO: Event Listener para o botao de Excluir
     deleteDayBtn.addEventListener('click', async () => {
         const isoDate = editDateInput.value;
-        showConfirm(`Tem certeza que deseja excluir o registro para ${isoDate}?`, async (confirmed) => {
+        showConfirm('confirm_delete_log_for_date', async (confirmed) => {
             if (confirmed) {
                 const response = await fetch(`/api/log/${isoDate}`, {
                     method: 'DELETE',
@@ -595,10 +643,10 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                     dayEditModal.hide();
                     renderCalendar(currentDate);
                 } else {
-                    showAlert('Erro ao excluir o registro.');
+                    showAlert('alert_error_deleting_log');
                 }
             }
-        });
+        }, { date: isoDate });
     });
 
     // NOVO: Event Listener para o botão "Gerenciar Férias"
@@ -613,12 +661,12 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         const endDate = vacationEndDateInput.value;
 
         if (!startDate || !endDate) {
-            showAlert('Por favor, selecione as datas de início e fim das férias.');
+            showAlert('alert_select_vacation_dates');
             return;
         }
 
         if (new Date(startDate) > new Date(endDate)) {
-            showAlert('A data de início não pode ser posterior à data de término.');
+            showAlert('alert_start_date_after_end_date');
             return;
         }
 
@@ -630,16 +678,16 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             });
 
             if (response.ok) {
-                showAlert('Período de férias adicionado com sucesso!');
+                showAlert('alert_vacation_added_success');
                 vacationModal.hide();
                 renderCalendar(currentDate);
             } else {
                 const errorData = await response.json();
-                showAlert(`Erro ao adicionar férias: ${errorData.detail || response.statusText}`);
+                showAlert('alert_error_adding_vacation', { error_detail: errorData.detail || response.statusText });
             }
         } catch (error) {
             console.error('Erro ao adicionar férias:', error);
-            showAlert('Erro ao conectar com o servidor para adicionar férias.');
+            showAlert('alert_error_connecting_server_vacation');
         }
     });
 
@@ -649,13 +697,13 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         const endDate = vacationEndDateInput.value;
 
         if (!startDate || !endDate) {
-            showAlert('Por favor, selecione as datas de início e fim das férias para remover.');
+            showAlert('alert_select_vacation_dates'); // Reusing the same alert for now
             return;
         }
 
         vacationModal.hide(); // Oculta o modal de férias antes de mostrar o de confirmação
 
-        showConfirm('Tem certeza que deseja remover este período de férias?', async (confirmed) => {
+        showConfirm('confirm_remove_vacation', async (confirmed) => {
             if (confirmed) {
                 try {
                     const response = await fetch(`/api/vacations?start_date=${startDate}&end_date=${endDate}`, {
@@ -663,15 +711,15 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                     });
 
                     if (response.ok) {
-                        showAlert('Período de férias removido com sucesso!');
+                        showAlert('alert_remove_vacation_success');
                         renderCalendar(currentDate);
                     } else {
                         const errorData = await response.json();
-                        showAlert(`Erro ao remover férias: ${errorData.detail || response.statusText}`);
+                        showAlert('alert_error_removing_vacation', { error_detail: errorData.detail || response.statusText });
                     }
                 } catch (error) {
                     console.error('Erro ao remover férias:', error);
-                    showAlert('Erro ao conectar com o servidor para remover férias.');
+                    showAlert('alert_error_connecting_server_remove_vacation');
                 }
             } else {
                 vacationModal.show(); // Reexibe o modal de férias se a confirmação for cancelada
@@ -725,9 +773,9 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             weeklyDayOffModal.hide();
             document.body.focus();
             renderCalendar(currentDate); // Recarrega o calendario para aplicar as novas configuracoes
-            showAlert('Dias de contribuição padrão salvos com sucesso!');
+            showAlert('alert_default_contribution_days_saved');
         } else {
-            showAlert('Erro ao salvar dias de contribuição padrão.');
+            showAlert('alert_error_saving_default_contribution_days');
         }
     });
 
@@ -735,7 +783,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         // Save Default Rate
         const rate = parseFloat(defaultDailyRateInput.value);
         if (isNaN(rate) || rate <= 0) {
-            showAlert('Por favor, insira um valor positivo para o Valor Padrão do Dia.');
+            showAlert('alert_positive_daily_rate');
             return;
         }
 
@@ -772,15 +820,15 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             }
 
             if (success) {
-                showAlert('Configurações salvas com sucesso!');
+                showAlert('alert_settings_saved_success');
                 settingsModal.hide(); // Hide the settings modal
                 renderCalendar(currentDate); // Re-render calendar to apply changes
             } else {
-                showAlert('Ocorreu um erro ao salvar uma ou ambas as configurações. Verifique o console para detalhes.');
+                showAlert('alert_error_saving_settings');
             }
         } catch (error) {
             console.error('Erro ao salvar configurações:', error);
-            showAlert('Ocorreu um erro inesperado ao salvar as configurações.');
+            showAlert('alert_unexpected_error_saving_settings');
         }
     });
 
@@ -791,7 +839,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         const paidAmount = parseFloat(paidAmountCalcInput.value);
 
         if (!paymentDate || !startDate || isNaN(dailyRate) || dailyRate <= 0 || isNaN(paidAmount) || paidAmount <= 0) {
-            calculatedDaysResult.textContent = 'Por favor, preencha todos os campos com valores válidos.';
+            calculatedDaysResult.innerHTML = `<span data-i18n="alert_fill_all_fields_valid_values">${translate("alert_fill_all_fields_valid_values")}</span>`;
             calculatedDaysResult.classList.remove('alert-success', 'alert-info');
             calculatedDaysResult.classList.add('alert-danger');
             return;
@@ -812,7 +860,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             const data = await response.json();
 
             if (response.ok) {
-                calculatedDaysResult.textContent = `Dias Trabalhados Calculados: ${data.calculated_days.toFixed(2)} dias`;
+                calculatedDaysResult.innerHTML = `<span data-i18n="calculated_days_result" data-i18n-options='{"days": "${data.calculated_days.toFixed(2)}"}'>${translate("calculated_days_result", {"days": data.calculated_days.toFixed(2)})}</span>`;
                 calculatedDaysResult.classList.remove('alert-danger', 'alert-info');
                 calculatedDaysResult.classList.add('alert-success');
 
@@ -886,19 +934,25 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                 renderCalendar(currentDate); // Re-renderiza o calendário para mostrar os novos dias
 
             } else {
-                calculatedDaysResult.textContent = `Erro: ${data.detail || 'Ocorreu um erro no cálculo.'}`;
+                calculatedDaysResult.innerHTML = `<span data-i18n="alert_error_calculating_days" data-i18n-options='{"error_detail": "${data.detail || 'Ocorreu um erro no cálculo.'}"}'>${translate("alert_error_calculating_days", {"error_detail": data.detail || 'Ocorreu um erro no cálculo.'})}</span>`;
                 calculatedDaysResult.classList.remove('alert-success', 'alert-info');
                 calculatedDaysResult.classList.add('alert-danger');
             }
         } catch (error) {
             console.error('Erro ao calcular dias:', error);
-            calculatedDaysResult.textContent = 'Erro ao conectar com o servidor.';
+            calculatedDaysResult.innerHTML = `<span data-i18n="alert_error_connecting_server_calculate_days">${translate("alert_error_connecting_server_calculate_days")}</span>`;
             calculatedDaysResult.classList.remove('alert-success', 'alert-info');
             calculatedDaysResult.classList.add('alert-danger');
         }
     });
 
+    const languageSelect = document.getElementById('language-select');
+    languageSelect.addEventListener('change', (event) => {
+        loadTranslations(event.target.value);
+    });
+
     // Inicializacao
+    await loadTranslations(currentLanguage); // Carrega as traduções iniciais
     await loadDefaultRate();
     loadDefaultDayOff(); // NOVO: Carrega a configuracao de folga padrao
     renderCalendar(currentDate);
