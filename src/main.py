@@ -9,7 +9,7 @@ from pydantic import BaseModel
 import json
 from sqlalchemy import select, and_, func
 
-from .database import create_db_and_tables, SessionLocal, WorkLog, ShiftType, WorkStatus, Settings, WeeklyPayment
+from .database import create_db_and_tables, SessionLocal, WorkLog, ShiftType, WorkStatus, Settings, WeeklyPayment, Vacation
 
 # Pydantic Models
 class WorkLogBase(BaseModel):
@@ -23,6 +23,18 @@ class WorkLogCreate(WorkLogBase):
 
 class WorkLogSchema(WorkLogBase):
     id: Optional[int] = None # ID pode ser None para logs virtuais
+    class Config:
+        orm_mode = True
+
+class VacationBase(BaseModel):
+    start_date: date
+    end_date: date
+
+class VacationCreate(VacationBase):
+    pass
+
+class VacationSchema(VacationBase):
+    id: Optional[int] = None
     class Config:
         orm_mode = True
 
@@ -67,7 +79,31 @@ async def read_root():
 def get_logs_for_range(start_date: date, end_date: date, db: Session = Depends(get_db)):
     statement = select(WorkLog).where(and_(WorkLog.date >= start_date, WorkLog.date <= end_date))
     logs = db.execute(statement).scalars().all()
-    return logs
+
+    vacation_statement = select(Vacation).where(
+        and_(Vacation.start_date <= end_date, Vacation.end_date >= start_date)
+    )
+    vacations = db.execute(vacation_statement).scalars().all()
+
+    logs_map = {log.date: log for log in logs}
+
+    for vacation in vacations:
+        current_date = vacation.start_date
+        while current_date <= vacation.end_date:
+            if start_date <= current_date <= end_date:
+                # Only add vacation log if there isn't an existing work log for that day
+                if current_date not in logs_map:
+                    logs_map[current_date] = WorkLog(
+                        date=current_date,
+                        status=WorkStatus.FERIAS, # Alterado de FOLGA para FERIAS
+                        shift_type=None,
+                        daily_rate=None
+                    )
+            current_date += timedelta(days=1)
+    
+    # Convert the dictionary values back to a list and sort by date
+    combined_logs = sorted(logs_map.values(), key=lambda log: log.date)
+    return combined_logs
 
 @app.post("/api/log", response_model=WorkLogSchema, tags=["Work Logs"])
 def create_or_update_log(log: WorkLogCreate, db: Session = Depends(get_db)):
@@ -90,6 +126,33 @@ def create_or_update_log(log: WorkLogCreate, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"Error in create_or_update_log: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/vacations", response_model=VacationSchema, tags=["Vacations"])
+def create_vacation(vacation: VacationCreate, db: Session = Depends(get_db)):
+    db_vacation = Vacation(**vacation.dict())
+    db.add(db_vacation)
+    db.commit()
+    db.refresh(db_vacation)
+    return db_vacation
+
+@app.delete("/api/vacations", tags=["Vacations"])
+def delete_vacation(start_date: date, end_date: date, db: Session = Depends(get_db)):
+    statement = select(Vacation).where(
+        and_(Vacation.start_date == start_date, Vacation.end_date == end_date)
+    )
+    db_vacation = db.execute(statement).scalars().first()
+
+    if not db_vacation:
+        raise HTTPException(status_code=404, detail="Período de férias não encontrado.")
+
+    db.delete(db_vacation)
+    db.commit()
+    return {"message": "Período de férias excluído com sucesso."}
+
+@app.get("/api/vacations", response_model=List[VacationSchema], tags=["Vacations"])
+def get_vacations(db: Session = Depends(get_db)):
+    vacations = db.execute(select(Vacation)).scalars().all()
+    return vacations
 
 @app.get("/api/summary/week", tags=["Calculations"])
 def get_week_summary(current_date: date, db: Session = Depends(get_db)):
@@ -292,6 +355,8 @@ class WeeklyPaymentBase(BaseModel):
     calculated_start_date: Optional[date] = None # NOVO
     calculated_days: Optional[float] = None # NOVO
     calculated_value: Optional[float] = None # NOVO
+    bonus: Optional[float] = None # NOVO
+    paid_amount: Optional[float] = None # NOVO
 
 class WeeklyPaymentCreate(WeeklyPaymentBase):
     pass
@@ -398,6 +463,8 @@ def get_monthly_payments_history(year: int, month: int, db: Session = Depends(ge
                     calculated_start_date=payment.calculated_start_date, # NOVO
                     calculated_days=payment.calculated_days, # NOVO
                     calculated_value=payment.calculated_value, # NOVO
+                    bonus=payment.bonus, # NOVO
+                    paid_amount=payment.paid_amount, # NOVO
                     period_end=period_end,
                     total_worked_days=total_worked_days,
                     total_worked_value=total_worked_value

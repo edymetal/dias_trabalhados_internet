@@ -22,6 +22,7 @@ class WorkStatus(str, enum.Enum):
     TRABALHADO = "trabalhado"
     FOLGA = "folga"
     NAO_TRABALHADO = "nao_trabalhado"
+    FERIAS = "ferias"
 
 class WorkLog(Base):
     __tablename__ = "work_logs"
@@ -47,6 +48,15 @@ class WeeklyPayment(Base):
     calculated_start_date = Column(Date, nullable=True) # NOVO: Data de início do cálculo
     calculated_days = Column(Float, nullable=True) # NOVO: Dias calculados
     calculated_value = Column(Float, nullable=True) # NOVO: Valor calculado
+    bonus = Column(Float, nullable=True) # NOVO: Valor do bônus
+    paid_amount = Column(Float, nullable=True) # NOVO: Valor total pago (Valor + Bônus)
+
+class Vacation(Base):
+    __tablename__ = "vacations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
 
 def create_db_and_tables():
     Base.metadata.create_all(bind=engine)
