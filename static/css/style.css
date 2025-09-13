@@ -24,7 +24,19 @@
 
 .day-name {
     font-weight: bold;
-    background-color: #f8f9fa;
+    background-color: #f0f0f0; /* Light gray background */
+    color: #333; /* Darker text color */
+    padding: 10px;
+    font-size: 0.95em; /* Slightly smaller font for subtlety */
+    border: 1px solid #ccc; /* Lighter border */
+    border-bottom: 2px solid #bbb; /* More pronounced bottom border */
+    text-transform: uppercase; /* Uppercase text */
+    letter-spacing: 0.05em; /* Slight letter spacing */
+
+    /* Flexbox for centering */
+    display: flex;
+    align-items: center; /* Vertical centering */
+    justify-content: center; /* Horizontal centering */
 }
 
 .status-indicator {
@@ -81,6 +93,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
+
+    /* New styles */
+    font-size: 1.1em; /* Slightly larger font */
+    gap: 5px; /* Space between icon and text */
+    cursor: pointer; /* Indicate it's clickable */
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important; /* Subtle shadow */
+    transition: all 0.2s ease-in-out; /* Smooth transition for hover */
+}
+
+.week-total-cell:hover {
+    transform: translateY(-2px); /* Lift effect on hover */
+    box-shadow: 0 .25rem .5rem rgba(0,0,0,.1)!important; /* More pronounced shadow on hover */
 }
 
 /* Estilos para dias de folga configurados */

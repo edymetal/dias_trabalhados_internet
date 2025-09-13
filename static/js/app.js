@@ -325,8 +325,8 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
 
             if (currentDayOfWeek === 6) { // Sunday
                 const weekTotalCell = document.createElement('div');
-                weekTotalCell.classList.add('calendar-day', 'week-total-cell');
-                weekTotalCell.textContent = `€${currentWeekTotal.toFixed(2)}`;
+                weekTotalCell.classList.add('calendar-day', 'week-total-cell', 'bg-primary-subtle', 'text-primary', 'fw-bold', 'd-flex', 'flex-column', 'justify-content-center', 'align-items-center');
+                weekTotalCell.innerHTML = `<i class="bi bi-coin me-1"></i>€${currentWeekTotal.toFixed(2)}`;
 
                 const weekStart = new Date(currentDay);
                 weekStart.setUTCDate(weekStart.getUTCDate() - 6);
@@ -346,8 +346,8 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         // Add the last week's total if it's not a full week
         if (currentWeekTotal > 0) {
             const weekTotalCell = document.createElement('div');
-            weekTotalCell.classList.add('calendar-day', 'week-total-cell');
-            weekTotalCell.textContent = `€${currentWeekTotal.toFixed(2)}`;
+            weekTotalCell.classList.add('calendar-day', 'week-total-cell', 'bg-primary-subtle', 'text-primary', 'fw-bold', 'd-flex', 'flex-column', 'justify-content-center', 'align-items-center');
+            weekTotalCell.innerHTML = `<i class="bi bi-wallet me-1"></i>€${currentWeekTotal.toFixed(2)}`;
 
             const weekStart = new Date(dayIterator); // This will be the day after the last day of the calendar
             weekStart.setUTCDate(weekStart.getUTCDate() - (weekStart.getUTCDay() + 6) % 7); // Adjust to Monday of the last week
