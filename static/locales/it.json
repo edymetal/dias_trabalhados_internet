@@ -19,6 +19,7 @@
     "status_worked": "Lavorato",
     "status_day_off": "Giorno Libero",
     "status_nao_trabalhado": "Non Lavorato",
+    "status_folga": "Giorno Libero",
     "status_vacation": "Vacanze",
     "modal_shift_label": "Turno",
     "shift_morning": "Mattina",

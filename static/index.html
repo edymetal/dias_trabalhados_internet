@@ -23,6 +23,7 @@
                 </div>
                 <div id="calendar-grid" class="calendar-grid"></div>
                 <hr>
+                <div id="weekly-summary" class="alert alert-info text-center mt-3" role="alert"></div>
                 <div class="row mt-4">
                     
                     
@@ -151,7 +152,7 @@
     </div>
     <!-- Modal for Weekly Day Off Configuration -->
     <div class="modal fade" id="weekly-day-off-modal" tabindex="-1" aria-labelledby="weeklyDayOffModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-sm">
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-primary text-white">
             <h5 class="modal-title" id="weeklyDayOffModalLabel" data-i18n="modal_manage_default_contribution_days_title"></h5>
@@ -162,9 +163,9 @@
             <form id="weekly-day-off-form">
                 <div class="mb-3">
                     <label class="form-label" data-i18n="label_select_default_contribution_days"></label>
-                    <div class="mb-3">
-                        <button type="button" class="btn btn-sm btn-primary me-2" id="select-all-days-btn" data-i18n="button_mark_all"></button>
-                        <button type="button" class="btn btn-sm btn-danger" id="deselect-all-days-btn" data-i18n="button_unmark_all"></button>
+                    <div class="mb-3 d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-primary w-50" id="select-all-days-btn"><i class="bi bi-check-all"></i></button>
+                        <button type="button" class="btn btn-danger w-50" id="deselect-all-days-btn"><i class="bi bi-x-square"></i></button>
                     </div>
                     <div id="day-off-checkboxes">
                         <!-- Checkboxes will be populated by JS -->

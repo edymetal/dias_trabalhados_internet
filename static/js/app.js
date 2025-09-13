@@ -543,6 +543,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
     async function populateWeeklyDayOffModal(weekStartDate, logsMap) { // Adiciona weekStartDate e logsMap como parametros
         currentWeekStartDate = weekStartDate; // Armazena a data de início da semana
         dayOffCheckboxesContainer.innerHTML = ''; // Limpa checkboxes anteriores
+
         const dayNamesFull = [
             translate('day_monday'),
             translate('day_tuesday'),
@@ -552,11 +553,6 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             translate('day_saturday'),
             translate('day_sunday')
         ];
-
-        // Formatar weekStartDate para YYYY-MM-DD
-        const formattedWeekStartDate = `${weekStartDate.getFullYear()}-${(weekStartDate.getMonth() + 1).toString().padStart(2, '0')}-${weekStartDate.getDate().toString().padStart(2, '0')}`;
-
-        
 
         const loggedDaysOfWeek = new Set();
         // Iterar sobre os dias da semana para verificar se há logs
@@ -572,18 +568,20 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         }
         console.log('loggedDaysOfWeek:', loggedDaysOfWeek);
 
-        dayNames.forEach((dayName, index) => {
-            const div = document.createElement('div');
-            div.classList.add('form-check');
+        const btnGroupDiv = document.createElement('div');
+        btnGroupDiv.classList.add('d-grid', 'gap-2'); // Use d-grid and gap-2 for vertical stacking and spacing
+        btnGroupDiv.setAttribute('role', 'group');
 
+        dayNamesFull.forEach((dayName, index) => {
             const input = document.createElement('input');
             input.type = 'checkbox';
-            input.classList.add('form-check-input');
+            input.classList.add('btn-check');
             input.id = `day-off-${index}`;
             input.value = index;
+            input.setAttribute('autocomplete', 'off');
 
             const label = document.createElement('label');
-            label.classList.add('form-check-label');
+            label.classList.add('btn', 'btn-outline-primary', 'w-100'); // w-100 for full width
             label.htmlFor = `day-off-${index}`;
             label.textContent = dayName;
 
@@ -592,10 +590,10 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                 input.checked = true;
             }
 
-            div.appendChild(input);
-            div.appendChild(label);
-            dayOffCheckboxesContainer.appendChild(div);
+            btnGroupDiv.appendChild(input);
+            btnGroupDiv.appendChild(label);
         });
+        dayOffCheckboxesContainer.appendChild(btnGroupDiv);
 
         // NOVO: Armazenar o estado inicial dos checkboxes marcados para esta semana
         initialConfiguredDaysOff = [];
