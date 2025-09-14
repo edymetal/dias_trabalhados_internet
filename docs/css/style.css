@@ -58,6 +58,30 @@
         white-space: normal; /* Permitir quebra de linha */
         word-break: break-word; /* Quebrar palavras longas */
     }
+
+    .month-navigation-container {
+        display: flex;
+        flex-direction: column; /* Stack elements vertically */
+        align-items: center; /* Center horizontally */
+    }
+
+    .month-year-display {
+        order: 1; /* Month/year at the top */
+        width: 100%; /* Take full width */
+        margin-bottom: 10px; /* Add some space below */
+    }
+
+    .month-buttons-display {
+        order: 2; /* Buttons below month/year */
+        width: 100%; /* Take full width */
+        display: flex;
+        justify-content: space-between; /* Buttons at ends */
+    }
+
+    .month-buttons-display .btn {
+        flex-grow: 1; /* Allow buttons to grow */
+        margin: 0 5px; /* Add some margin between buttons */
+    }
 }
 }
 

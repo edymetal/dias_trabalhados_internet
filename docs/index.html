@@ -17,14 +17,12 @@
                 <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#settings-modal"><i class="bi bi-gear"></i></button>
             </div>
             <div class="card-body">
-                <div class="row align-items-center mb-4 flex-wrap">
-                    <div class="col-auto text-start">
-                        <button class="btn btn-outline-primary" id="prev-month-btn" data-i18n="prev_month"></button>
-                    </div>
-                    <div class="col text-center flex-grow-1 flex-shrink-1">
+                <div class="month-navigation-container mb-4">
+                    <div class="month-year-display text-center">
                         <h2 id="current-month-year" class="mb-0 text-truncate"></h2>
                     </div>
-                    <div class="col-auto text-end">
+                    <div class="month-buttons-display d-flex justify-content-between mt-2">
+                        <button class="btn btn-outline-primary" id="prev-month-btn" data-i18n="prev_month"></button>
                         <button class="btn btn-outline-primary" id="next-month-btn" data-i18n="next_month"></button>
                     </div>
                 </div>
