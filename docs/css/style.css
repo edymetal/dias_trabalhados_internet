@@ -1,16 +1,32 @@
 /* Estilos personalizados para o calendario */
 .calendar-grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr); /* 7 dias + 1 para o total semanal */
-    gap: 5px;
+    grid-template-columns: repeat(7, 1fr); /* Usar 1fr para todas as colunas em telas pequenas */
+    gap: 2px; /* Reduzir o gap para telas pequenas */
+    width: 100%; /* Garante que ocupe a largura total disponível */
+}
+
+@media (min-width: 769px) {
+    .calendar-grid {
+        grid-template-columns: repeat(8, 1fr); /* 7 dias + 1 para o total semanal em telas maiores */
+        gap: 5px; /* Gap padrão para telas maiores */
+    }
+}
+
+.calendar-day {
+    box-sizing: border-box; /* Incluir padding e border na largura total */
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: background-color 0.3s;
+    background-color: #f8f9fa; /* Cor de fundo suave para os dias do calendário */
 }
 
 @media (max-width: 768px) {
-    .calendar-grid {
-        grid-template-columns: repeat(7, 1fr); /* Apenas 7 dias em telas pequenas */
-        gap: 2px;
-    }
-
     .calendar-day {
         padding: 5px;
         min-height: 50px; /* Altura mínima menor */
@@ -28,6 +44,10 @@
 
     .week-total-header, .week-total-cell {
         display: none; /* Oculta a coluna de total semanal em telas pequenas */
+    }
+
+    #current-month-year {
+        font-size: 1.2em; /* Reduz o tamanho da fonte do mês/ano em telas pequenas */
     }
 }
 
@@ -137,5 +157,18 @@
     padding: 15px; /* Aumenta o padding */
     font-size: 1.2em; /* Aumenta o tamanho da fonte */
     font-weight: bold; /* Deixa o texto em negrito */
-    grid-column: span 8; /* Ocupa todas as 8 colunas */
+    grid-column: span 7; /* Ocupa todas as 7 colunas por padrão */
+}
+
+@media (min-width: 769px) {
+    .month-total {
+        grid-column: span 8; /* Ocupa 8 colunas em telas maiores */
+    }
+}
+
+@media (max-width: 768px) {
+    .month-total {
+        font-size: 1em; /* Reduz o tamanho da fonte do total do mês em telas pequenas */
+        padding: 10px; /* Ajusta o padding */
+    }
 }

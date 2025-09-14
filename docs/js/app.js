@@ -429,16 +429,16 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         monthlyTotalPaid = monthlyTotalValue + monthlyTotalBonus; // Calculate Total Pago
 
         monthTotalElement.innerHTML = `
-            <div class="row align-items-center justify-content-between mb-2">
-                <div class="col-auto text-start">
+            <div class="row row-cols-1 row-cols-md-2 align-items-center justify-content-between mb-2">
+                <div class="col text-start">
                     <i class="bi bi-coin me-1"></i> ${translate('total_worked_value', { value: monthlyTotalValue.toFixed(2) })}
                 </div>
-                <div class="col-auto text-end">
+                <div class="col text-end">
                     <i class="bi bi-gift me-1"></i> ${translate('bonus', { value: monthlyTotalBonus.toFixed(2) })}
                 </div>
             </div>
             <div class="row align-items-center justify-content-center">
-                <div class="col-auto text-center fs-5 fw-bold">
+                <div class="col text-center fs-6 fs-md-5 fw-bold">
                     <i class="bi bi-wallet me-1"></i> ${translate('total_paid', { value: monthlyTotalPaid.toFixed(2) })}
                 </div>
             </div>
