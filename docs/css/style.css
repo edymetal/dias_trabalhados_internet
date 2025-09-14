@@ -1,0 +1,127 @@
+/* Estilos personalizados para o calendario */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr); /* 7 dias + 1 para o total semanal */
+    gap: 5px;
+}
+
+.calendar-day {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: background-color 0.3s;
+    background-color: #f8f9fa; /* Cor de fundo suave para os dias do calendário */
+}
+
+.calendar-day:hover {
+    background-color: #e9ecef;
+    cursor: pointer;
+}
+
+.day-name {
+    font-weight: bold;
+    background-color: #f0f0f0; /* Light gray background */
+    color: #333; /* Darker text color */
+    padding: 10px;
+    font-size: 0.95em; /* Slightly smaller font for subtlety */
+    border: 1px solid #ccc; /* Lighter border */
+    border-bottom: 2px solid #bbb; /* More pronounced bottom border */
+    text-transform: uppercase; /* Uppercase text */
+    letter-spacing: 0.05em; /* Slight letter spacing */
+
+    /* Flexbox for centering */
+    display: flex;
+    align-items: center; /* Vertical centering */
+    justify-content: center; /* Horizontal centering */
+}
+
+.status-indicator {
+    font-size: 0.8em;
+    font-weight: bold;
+    padding: 2px;
+    border-radius: 4px;
+    color: white;
+    margin-top: 5px;
+}
+
+/* Cores para cada status */
+.status-trabalhado {
+    background-color: #d4edda; /* Verde claro */
+    border-color: #c3e6cb;
+}
+.status-trabalhado .status-indicator {
+    background-color: #28a745; /* Verde */
+}
+
+.status-folga {
+    background-color: #fff3cd; /* Amarelo claro */
+    border-color: #ffeeba;
+}
+.status-folga .status-indicator {
+    background-color: #ffc107; /* Amarelo */
+    color: #212529 !important;
+}
+
+.status-ferias {
+    background-color: #add8e6; /* Azul claro */
+    border-color: #87ceeb;
+}
+.status-ferias .status-indicator {
+    background-color: #007bff; /* Azul */
+    color: white !important;
+}
+
+.status-nao_trabalhado {
+    background-color: #f8d7da; /* Vermelho claro */
+    border-color: #f5c6cb;
+}
+.status-nao_trabalhado .status-indicator {
+    background-color: #dc3545; /* Vermelho */
+}
+
+/* Estilos para totais */
+.week-total-cell { /* Nova classe para a célula do total semanal */
+    background-color: #e9ecef;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* New styles */
+    font-size: 1.1em; /* Slightly larger font */
+    gap: 5px; /* Space between icon and text */
+    cursor: pointer; /* Indicate it's clickable */
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important; /* Subtle shadow */
+    transition: all 0.2s ease-in-out; /* Smooth transition for hover */
+}
+
+.week-total-cell:hover {
+    transform: translateY(-2px); /* Lift effect on hover */
+    box-shadow: 0 .25rem .5rem rgba(0,0,0,.1)!important; /* More pronounced shadow on hover */
+}
+
+/* Estilos para dias de folga configurados */
+.status-configured-day-off {
+    background-color: #d4edda; /* Verde claro */
+    border-color: #c3e6cb;
+}
+.status-configured-day-off .status-indicator {
+    background-color: #28a745; /* Verde */
+}
+
+.month-total {
+    background-color: #e9f7ef; /* Verde suave para o total do mês */
+    border: 1px solid #b8daff; /* Borda azul clara para contraste */
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important; /* Sombra sutil */
+    padding: 15px; /* Aumenta o padding */
+    font-size: 1.2em; /* Aumenta o tamanho da fonte */
+    font-weight: bold; /* Deixa o texto em negrito */
+    grid-column: span 8; /* Ocupa todas as 8 colunas */
+}

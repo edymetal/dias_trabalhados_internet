@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Header
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
@@ -64,7 +65,16 @@ app = FastAPI(
     version="0.3.1"
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Configuração do CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todas as origens para desenvolvimento. Ajuste para domínios específicos em produção.
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.mount("/static", StaticFiles(directory="docs"), name="static")
 
 @app.on_event("startup")
 def on_startup():
@@ -82,7 +92,7 @@ def get_db():
 
 @app.get("/", tags=["Frontend"], include_in_schema=False)
 async def read_root():
-    return FileResponse('static/index.html')
+    return FileResponse('docs/index.html')
 
 @app.get("/api/logs", response_model=List[WorkLogSchema], tags=["Work Logs"])
 def get_logs_for_range(start_date: date, end_date: date, db: Session = Depends(get_db)):
