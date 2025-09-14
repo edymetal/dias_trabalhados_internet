@@ -143,7 +143,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
 
     async function loadTranslations(lang) {
         try {
-            const response = await fetch(`../locales/${lang}.json`);
+            const response = await fetch(`/dias_trabalhados_internet/locales/${lang}.json`);
             translations = await response.json();
             currentLanguage = lang;
             localStorage.setItem('language', lang);
