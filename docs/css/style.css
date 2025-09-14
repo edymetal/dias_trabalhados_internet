@@ -28,18 +28,20 @@
 
 @media (max-width: 768px) {
     .calendar-day {
-        padding: 5px;
-        min-height: 50px; /* Altura mínima menor */
-        font-size: 0.7em;
+        padding: 2px; /* Reduzir o padding */
+        min-height: 40px; /* Altura mínima menor */
+        font-size: 0.6em;
     }
 
     .day-name {
-        font-size: 0.7em;
-        padding: 5px;
+        font-size: 0.6em;
+        padding: 2px; /* Reduzir o padding */
+        white-space: normal; /* Permitir quebra de linha */
+        word-break: break-word; /* Quebrar palavras longas */
     }
 
     .status-indicator {
-        font-size: 0.6em;
+        font-size: 0.5em;
     }
 
     .week-total-header, .week-total-cell {
@@ -47,8 +49,16 @@
     }
 
     #current-month-year {
-        font-size: 1.2em; /* Reduz o tamanho da fonte do mês/ano em telas pequenas */
+        font-size: 1em; /* Reduz o tamanho da fonte do mês/ano em telas pequenas */
     }
+
+    .month-total {
+        font-size: 0.9em; /* Reduz o tamanho da fonte do total do mês em telas pequenas */
+        padding: 8px; /* Ajusta o padding */
+        white-space: normal; /* Permitir quebra de linha */
+        word-break: break-word; /* Quebrar palavras longas */
+    }
+}
 }
 
 .calendar-day:hover {
