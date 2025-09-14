@@ -5,16 +5,30 @@
     gap: 5px;
 }
 
-.calendar-day {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-    min-height: 80px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: background-color 0.3s;
-    background-color: #f8f9fa; /* Cor de fundo suave para os dias do calendário */
+@media (max-width: 768px) {
+    .calendar-grid {
+        grid-template-columns: repeat(7, 1fr); /* Apenas 7 dias em telas pequenas */
+        gap: 2px;
+    }
+
+    .calendar-day {
+        padding: 5px;
+        min-height: 50px; /* Altura mínima menor */
+        font-size: 0.7em;
+    }
+
+    .day-name {
+        font-size: 0.7em;
+        padding: 5px;
+    }
+
+    .status-indicator {
+        font-size: 0.6em;
+    }
+
+    .week-total-header, .week-total-cell {
+        display: none; /* Oculta a coluna de total semanal em telas pequenas */
+    }
 }
 
 .calendar-day:hover {
