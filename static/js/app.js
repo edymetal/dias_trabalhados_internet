@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function () {
+    const API_BASE_URL = 'https://dias-trabalhados-internet.onrender.com'; // URL do seu backend no Render (use HTTPS se disponível)
     // --- Elementos da UI ---
     const calendarGrid = document.getElementById('calendar-grid');
     const currentMonthYear = document.getElementById('current-month-year');
@@ -176,7 +177,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
 
     // --- Funcoes de Carregamento e Salvamento de Configuracoes ---
     async function loadDefaultRate() {
-        const response = await fetch('/api/settings/default_rate');
+        const response = await fetch(`${API_BASE_URL}/api/settings/default_rate`);
         const data = await response.json();
         if (data.value) {
             defaultDailyRateInput.value = parseFloat(data.value).toFixed(2);
@@ -188,7 +189,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
     }
 
     async function loadDefaultDayOff() {
-        const response = await fetch('/api/settings/default_day_off');
+        const response = await fetch(`${API_BASE_URL}/api/settings/default_day_off`);
         const data = await response.json();
         if (data.value) {
             defaultDayOffSelect.value = data.value;
@@ -227,10 +228,10 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
 
         // 2. Fetch all logs, history, and vacations for the entire displayed period.
         const [logsResponse, historyResponseRaw, weeklyConfigResponse, vacationsResponse] = await Promise.all([
-            fetch(`/api/logs?start_date=${calendarStartDate.toISOString().split('T')[0]}&end_date=${calendarEndDate.toISOString().split('T')[0]}`),
-            fetch('/api/settings/default_day_off'),
-            fetch(`/api/settings/configured_days_off_weekly_range?start_date=${calendarStartDate.toISOString().split('T')[0]}&end_date=${calendarEndDate.toISOString().split('T')[0]}`),
-            fetch('/api/vacations')
+            fetch(`${API_BASE_URL}/api/logs?start_date=${calendarStartDate.toISOString().split('T')[0]}&end_date=${calendarEndDate.toISOString().split('T')[0]}`),
+            fetch(`${API_BASE_URL}/api/settings/default_day_off`),
+            fetch(`${API_BASE_URL}/api/settings/configured_days_off_weekly_range?start_date=${calendarStartDate.toISOString().split('T')[0]}&end_date=${calendarEndDate.toISOString().split('T')[0]}`),
+            fetch(`${API_BASE_URL}/api/vacations`)
         ]);
 
         logsMap = new Map((await logsResponse.json()).map(log => [log.date, log]));
@@ -412,7 +413,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         await renderPaymentHistory(year, month + 1); // Ensure this is awaited
 
         // Calculate and display monthly totals
-        const monthlyPaymentsResponse = await fetch(`/api/monthly_payments_history?year=${year}&month=${month + 1}`);
+        const monthlyPaymentsResponse = await fetch(`${API_BASE_URL}/api/monthly_payments_history?year=${year}&month=${month + 1}`);
         const monthlyPayments = await monthlyPaymentsResponse.json();
 
         let monthlyTotalValue = 0;
@@ -452,7 +453,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         paymentHistoryBody.innerHTML = ''; // Clear previous entries
         noPaymentHistoryMessage.style.display = 'none'; // Hide message by default
 
-        const response = await fetch(`/api/monthly_payments_history?year=${year}&month=${month}`);
+        const response = await fetch(`${API_BASE_URL}/api/monthly_payments_history?year=${year}&month=${month}`);
         const payments = await response.json();
 
         if (payments.length === 0) {
@@ -521,7 +522,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             deleteButton.addEventListener('click', async () => {
                 showConfirm('confirm_delete_payment_record', async (confirmed) => {
                     if (confirmed) {
-                        const response = await fetch(`/api/weekly_payment/${payment.id}`, {
+                        const response = await fetch(`${API_BASE_URL}/api/weekly_payment/${payment.id}`, {
                             method: 'DELETE',
                         });
                         if (response.ok) {
@@ -603,7 +604,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
     }
 
     async function updateWeeklySummary(isoDate) {
-        const response = await fetch(`/api/summary/week?current_date=${isoDate}`);
+        const response = await fetch(`${API_BASE_URL}/api/summary/week?current_date=${isoDate}`);
         const data = await response.json();
         weeklySummary.textContent = `${translate('total_for_week')} (${new Date(data.week_start).toLocaleDateString(currentLanguage)} ${translate('to')} ${new Date(data.week_end).toLocaleDateString(currentLanguage)}): €${data.total.toFixed(2)}`;
     }
@@ -618,7 +619,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             daily_rate: statusSelect.value === 'trabalhado' ? parseFloat(dailyRateInput.value) : null,
         };
 
-        await fetch('/api/log', {
+        await fetch(`${API_BASE_URL}/api/log`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(logData),
@@ -633,7 +634,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         const isoDate = editDateInput.value;
         showConfirm('confirm_delete_log_for_date', async (confirmed) => {
             if (confirmed) {
-                const response = await fetch(`/api/log/${isoDate}`, {
+                const response = await fetch(`${API_BASE_URL}/api/log/${isoDate}`, {
                     method: 'DELETE',
                 });
 
@@ -669,7 +670,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         }
 
         try {
-            const response = await fetch('/api/vacations', {
+            const response = await fetch(`${API_BASE_URL}/api/vacations`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ start_date: startDate, end_date: endDate }),
@@ -704,7 +705,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         showConfirm('confirm_remove_vacation', async (confirmed) => {
             if (confirmed) {
                 try {
-                    const response = await fetch(`/api/vacations?start_date=${startDate}&end_date=${endDate}`, {
+                    const response = await fetch(`${API_BASE_URL}/api/vacations?start_date=${startDate}&end_date=${endDate}`, {
                         method: 'DELETE',
                     });
 
@@ -761,7 +762,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         console.log('Sending days:', selectedDays); // Added for debugging
         const formattedWeekStartDateSave = `${currentWeekStartDate.getFullYear()}-${(currentWeekStartDate.getMonth() + 1).toString().padStart(2, '0')}-${currentWeekStartDate.getDate().toString().padStart(2, '0')}`;
 
-        const response = await fetch('/api/settings/configured_days_off_weekly', {
+        const response = await fetch(`${API_BASE_URL}/api/settings/configured_days_off_weekly`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ week_start_date: formattedWeekStartDateSave, days: selectedDays }),
@@ -785,7 +786,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
             return;
         }
 
-        const saveRatePromise = fetch('/api/settings/default_rate', {
+        const saveRatePromise = fetch(`${API_BASE_URL}/api/settings/default_rate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ value: rate.toFixed(2) }),
@@ -793,7 +794,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
 
         // Save Default Day Off
         const dayOff = defaultDayOffSelect.value;
-        const saveDayOffPromise = fetch('/api/settings/default_day_off', {
+        const saveDayOffPromise = fetch(`${API_BASE_URL}/api/settings/default_day_off`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ value: dayOff }),
@@ -844,7 +845,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
         }
 
         try {
-            const response = await fetch('/api/calculate-days', {
+            const response = await fetch(`${API_BASE_URL}/api/calculate-days`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -887,7 +888,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                             daily_rate: dailyRate,
                         };
 
-                        await fetch('/api/log', {
+                        await fetch(`${API_BASE_URL}/api/log`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(logData),
@@ -907,7 +908,7 @@ const manageVacationsBtn = document.getElementById('manage-vacations-btn'); // N
                 weekStartPaymentDate.setDate(paymentDateObj.getDate() - daysToSubtract);
                 const isoWeekStartPaymentDate = weekStartPaymentDate.toISOString().split('T')[0];
 
-                await fetch('/api/weekly_payment', {
+                await fetch(`${API_BASE_URL}/api/weekly_payment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
