@@ -68,7 +68,7 @@ app = FastAPI(
 # Configuração do CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://www.edney.it", "https://dias-trabalhados-internet.onrender.com"],  # Permite origens específicas para produção.
+    allow_origins=["https://dias-trabalhados-internet.onrender.com", "https://www.edneypugliese.it"],  # Permite origens específicas para produção.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
