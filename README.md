@@ -11,14 +11,13 @@ Este é um aplicativo web para "Controle de Dias Trabalhados", desenvolvido para
 
 ## Arquitetura
 
-O projeto segue uma arquitetura cliente-servidor. O frontend (servido por `index.html` e seus ativos estáticos) interage com o backend FastAPI através de uma API RESTful para persistir e recuperar dados de um banco de dados SQLite.
+O projeto segue uma arquitetura cliente-servidor. O frontend (servido por `index.html` e seus ativos estáticos no diretório `docs/`) interage com o backend FastAPI através de uma API RESTful para persistir e recuperar dados de um banco de dados SQLite.
 
 ## Estrutura de Pastas
 
-*   **Estrutura de Pastas:**
-    *   `src/`: Contém o código-fonte Python do backend (`main.py`, `database.py`).
-    *   `docs/`: Contém os ativos do frontend (`index.html`, `css/`, `js/`).
-    *   `venv/`: Ambiente virtual Python.
+*   `src/`: Contém o código-fonte Python do backend (`main.py`, `database.py`).
+*   `docs/`: Contém os ativos do frontend (`index.html`, `css/`, `js/`).
+*   `venv/`: Ambiente virtual Python.
 
 ## Pré-requisitos
 
