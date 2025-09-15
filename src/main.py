@@ -74,7 +74,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="docs"), name="static")
+app.mount("/dias_trabalhados_internet/", StaticFiles(directory="docs"), name="static")
 
 @app.on_event("startup")
 def on_startup():
