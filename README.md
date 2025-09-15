@@ -15,9 +15,10 @@ O projeto segue uma arquitetura cliente-servidor. O frontend (servido por `index
 
 ## Estrutura de Pastas
 
-*   `src/`: Contém o código-fonte Python do backend (`main.py`, `database.py`, `i18n.py`).
-*   `static/`: Contém os ativos do frontend (`index.html`, `css/`, `js/`, `locales/`).
-*   `venv/`: Ambiente virtual Python.
+*   **Estrutura de Pastas:**
+    *   `src/`: Contém o código-fonte Python do backend (`main.py`, `database.py`).
+    *   `docs/`: Contém os ativos do frontend (`index.html`, `css/`, `js/`).
+    *   `venv/`: Ambiente virtual Python.
 
 ## Pré-requisitos
 
